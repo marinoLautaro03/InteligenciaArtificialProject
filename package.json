@@ -1,0 +1,11 @@
+{
+  "name": "inteligencia-artificial-project",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@10.12.4",
+  "scripts": {
+    "dev": "pnpm --parallel --filter frontend --filter backend dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint"
+  }
+}
