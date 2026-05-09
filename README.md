@@ -1,16 +1,140 @@
-Social Content Studio — qué es
-Una app web donde un creador de contenido describe en pocas palabras lo que quiere publicar, elige la red social destino, y la app le devuelve automáticamente el texto del post con sus hashtags y una imagen generada, todo listo para copiar y publicar.
+# InteligenciaArtificialProject
 
-El flujo completo en 4 pasos
+Monorepo base para una app web con frontend en React + Vite y backend en Hono + Drizzle + PostgreSQL.
 
-El creador escribe un brief corto: tema, tono y para qué red es el post.
-La app entiende el brief y genera el copy adaptado a esa red (largo, estilo, formato).
-Al mismo tiempo genera una imagen coherente con el mensaje.
-El creador ve el resultado, puede pedirle ajustes, y cuando está conforme lo descarga o copia.
+## Prerrequisitos
 
+- Node.js 22 o superior
+- pnpm 10 o superior
+- Docker Desktop o Docker Engine con Docker Compose
 
-Lo que resuelve
-Los creadores pierden mucho tiempo pasando de una herramienta a otra para escribir el texto, buscar o crear la imagen, ajustar el formato por red, y agregarle hashtags relevantes. Esta app colapsa todo eso en un solo lugar y en segundos.
+## Estructura
 
-Las diferencias por red que la app maneja sola
-Cada red tiene sus propias reglas de formato, largo de texto y cantidad de hashtags. El creador solo elige la red y la app se encarga de respetar esas reglas automáticamente, sin que el usuario tenga que pensar en eso.
+- `frontend/`: aplicacion React + Vite
+- `backend/`: API en Hono, acceso a datos con Drizzle y PostgreSQL
+
+## Instalacion
+
+1. Instalar dependencias del monorepo:
+
+```bash
+pnpm install
+```
+
+2. Crear los archivos locales de variables de entorno sin versionar secretos:
+
+```bash
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
+
+En PowerShell podes usar:
+
+```powershell
+Copy-Item backend/.env.example backend/.env
+Copy-Item frontend/.env.example frontend/.env
+```
+
+### Variables de entorno
+
+#### Backend
+
+El backend usa `backend/.env` y espera estas variables:
+
+- `PORT`: puerto HTTP de la API. Valor por defecto: `3001`.
+- `DATABASE_URL`: cadena de conexion a PostgreSQL. Valor de ejemplo:
+  `postgres://postgres:postgres@localhost:5432/ia_project`
+
+#### Frontend
+
+Hoy el frontend no necesita variables publicas obligatorias para arrancar.
+El archivo `frontend/.env.example` deja documentado que, si mas adelante se consume la API desde otro origen, la variable publica esperable seria `VITE_API_URL`.
+
+## PostgreSQL local
+
+El proyecto incluye `backend/docker-compose.yml` para levantar una base local.
+
+```bash
+docker compose -f backend/docker-compose.yml up -d
+```
+
+Credenciales del contenedor:
+
+- host: `localhost`
+- puerto: `5432`
+- base: `ia_project`
+- usuario: `postgres`
+- password: `postgres`
+
+Para detener el contenedor:
+
+```bash
+docker compose -f backend/docker-compose.yml down
+```
+
+## Desarrollo
+
+Levantar frontend y backend en paralelo desde la raiz:
+
+```bash
+pnpm dev
+```
+
+Servicios disponibles:
+
+- frontend: `http://localhost:5173`
+- backend: `http://localhost:3001`
+- healthcheck backend: `http://localhost:3001/health`
+
+Tambien podes correr cada app por separado:
+
+```bash
+pnpm --filter backend dev
+pnpm --filter frontend dev
+```
+
+## Base de datos
+
+Comandos utiles del backend para Drizzle:
+
+```bash
+pnpm --filter backend db:generate
+pnpm --filter backend db:push
+```
+
+## Build, lint y typecheck
+
+Desde la raiz:
+
+```bash
+pnpm build
+pnpm lint
+```
+
+Notas:
+
+- `pnpm build` compila frontend y backend.
+- `pnpm lint` ejecuta `eslint` en frontend y `tsc --noEmit` en backend.
+- El backend no expone un script separado llamado `typecheck`; el chequeo de tipos actual corre dentro de `lint`.
+
+## Scripts por paquete
+
+### Frontend
+
+```bash
+pnpm --filter frontend dev
+pnpm --filter frontend build
+pnpm --filter frontend lint
+pnpm --filter frontend preview
+```
+
+### Backend
+
+```bash
+pnpm --filter backend dev
+pnpm --filter backend build
+pnpm --filter backend lint
+pnpm --filter backend test:e2e
+pnpm --filter backend db:generate
+pnpm --filter backend db:push
+```
