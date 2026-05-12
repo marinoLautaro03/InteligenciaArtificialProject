@@ -142,6 +142,16 @@ Para detener el contenedor:
 docker compose -f backend/docker-compose.yml down
 ```
 
+## Prototype
+
+El directorio `prototype/` contiene un prototipo estático de la aplicación. Es documentación de referencia — no se modifica ni se importa desde el código.
+
+Para visualizarlo en el navegador:
+
+```powershell
+pnpm dlx serve .\prototype
+```
+
 ## Desarrollo
 
 Levantar frontend y backend en paralelo desde la raiz:
