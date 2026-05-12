@@ -52,7 +52,7 @@ El archivo `frontend/.env.example` deja documentado que, si mas adelante se cons
 
 ## MCP (Claude Code)
 
-El proyecto incluye `.mcp.json.example` como plantilla para configurar servidores MCP de Claude Code (Atlassian/Jira).
+El proyecto incluye `.mcp.json.example` como plantilla para configurar los servidores MCP de Claude Code. Copialo y completá tus credenciales:
 
 ```bash
 cp .mcp.json.example .mcp.json
@@ -64,9 +64,27 @@ En PowerShell:
 Copy-Item .mcp.json.example .mcp.json
 ```
 
-Luego editá `.mcp.json` y reemplazá los valores de `JIRA_URL`, `JIRA_USERNAME` y `JIRA_API_TOKEN` con tus credenciales reales. Generá un API token en https://id.atlassian.com/manage-api-tokens.
+El archivo `.mcp.json` está en `.gitignore` — nunca se commitea. Requiere Docker Desktop corriendo para levantar los contenedores.
 
-El archivo `.mcp.json` está en `.gitignore` — nunca se commitea.
+### Atlassian / Jira
+
+Editá `.mcp.json` y reemplazá:
+
+| Variable | Descripcion |
+|---|---|
+| `JIRA_URL` | URL de tu instancia, ej. `https://tu-dominio.atlassian.net` |
+| `JIRA_USERNAME` | Tu email de Atlassian |
+| `JIRA_API_TOKEN` | Token generado en https://id.atlassian.com/manage-api-tokens |
+
+### GitHub
+
+Editá `.mcp.json` y reemplazá:
+
+| Variable | Descripcion |
+|---|---|
+| `GITHUB_PERSONAL_ACCESS_TOKEN` | Personal Access Token generado en https://github.com/settings/tokens con scope `repo` |
+
+Reinicia Claude Code para que los cambios tomen efecto.
 
 ## PostgreSQL local
 

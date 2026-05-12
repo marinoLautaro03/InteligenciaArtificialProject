@@ -15,5 +15,17 @@
         "JIRA_API_TOKEN": "tu-api-token"
       }
     }
+    },
+    "github": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "-e", "GITHUB_PERSONAL_ACCESS_TOKEN",
+        "ghcr.io/github/github-mcp-server"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "tu-github-personal-access-token"
+      }
+    }
   }
 }
