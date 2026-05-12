@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Social Content Studio — Print</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css"/>
+<style>
+  html, body { background: #ddd; }
+  .print-doc { display: flex; flex-direction: column; gap: 24px; padding: 24px; }
+  .print-page {
+    width: 1280px;
+    height: 820px;
+    background: var(--bg);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin: 0 auto;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    break-after: page;
+    page-break-after: always;
+  }
+  .print-page:last-child { break-after: auto; page-break-after: auto; }
+  .print-page-head {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .print-page-head .lbl {
+    font-size: 10px;
+    color: var(--fg-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .print-page-head .right { margin-left: auto; }
+  .print-stage { flex: 1; overflow: hidden; position: relative; }
+  .print-stage.full { padding: 0; }
+
+  /* Force the inner app to use the page area, not 100vh */
+  .print-stage .app { height: 100% !important; width: 100% !important; }
+  .print-stage .login-page { min-height: 100% !important; }
+
+  /* Disable interactive states for print */
+  .print-doc * { animation: none !important; transition: none !important; }
+  .print-doc .skel-spinner { display: none !important; }
+
+  /* Hide tweaks panel in print version */
+  [data-tweaks-panel] { display: none !important; }
+
+  @page {
+    size: 1280px 820px;
+    margin: 0;
+  }
+
+  @media print {
+    html, body { background: #fff; }
+    .print-doc { padding: 0; gap: 0; }
+    .print-page {
+      box-shadow: none;
+      width: 1280px;
+      height: 820px;
+      margin: 0;
+    }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="components/icons.jsx"></script>
+<script type="text/babel" src="components/social-preview.jsx"></script>
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="screens/generator.jsx"></script>
+<script type="text/babel" src="screens/screens.jsx"></script>
+<script type="text/babel">
+// Stubs for Sidebar/TopBar (extracted from app.jsx so print page doesn't pull tweaks)
+const Sidebar = ({ projects, activeProject, screen }) => (
+  <aside className="sidebar">
+    <div className="brand">
+      <div className="brand-mark">SC</div>
+      <div>
+        <div className="brand-name">Social Content Studio</div>
+        <div className="brand-sub">v0.1 · MVP</div>
+      </div>
+    </div>
+    <div className="nav-section">
+      <div className="nav-label">General</div>
+      <button className={"nav-item" + (screen === "dashboard" ? " active" : "")}><Icons.Folder/> Proyectos <span className="count">{projects.length}</span></button>
+      <button className="nav-item"><Icons.Settings/> Ajustes</button>
+    </div>
+    {activeProject && (
+      <div className="nav-section">
+        <div className="nav-label">{activeProject.name}</div>
+        <button className={"nav-item" + (screen === "generator" ? " active" : "")}><Icons.Sparkle/> Generador</button>
+        <button className={"nav-item" + (screen === "history" || screen === "detail" ? " active" : "")}><Icons.History/> Historial <span className="count">{activeProject.posts}</span></button>
+      </div>
+    )}
+    <div className="nav-section">
+      <div className="nav-label">Acceso rápido</div>
+      {projects.slice(0, 4).map(p => (
+        <button key={p.id} className={"nav-item" + (activeProject?.id === p.id ? " active" : "")}>
+          <span style={{
+            width:16, height:16, background:"var(--surface-2)", border:"1px solid var(--border)",
+            borderRadius:4, display:"grid", placeItems:"center", fontFamily:"var(--font-mono)", fontSize:9, color:"var(--fg)"
+          }}>{p.glyph}</span>
+          {p.name}
+        </button>
+      ))}
+    </div>
+    <div className="spacer"/>
+    <div className="user-card">
+      <div className="user-avatar">LU</div>
+      <div className="user-meta">
+        <div className="name">Lucía M.</div>
+        <div className="email">lucia@cafeaurora.co</div>
+      </div>
+    </div>
+  </aside>
+);
+const TopBar = ({ activeProject, screen }) => (
+  <div className="topbar">
+    <div className="crumbs">
+      {!activeProject && <span className="current">Proyectos</span>}
+      {activeProject && (
+        <>
+          <span>Proyectos</span>
+          <span className="sep">/</span>
+          <span>{activeProject.name}</span>
+          {(screen === "history" || screen === "detail") && (<><span className="sep">/</span><span className="current">Historial</span></>)}
+          {screen === "generator" && (<><span className="sep">/</span><span className="current">Generador</span></>)}
+          {screen === "detail" && (<><span className="sep">/</span><span className="current">Post</span></>)}
+        </>
+      )}
+    </div>
+    <div className="right"></div>
+  </div>
+);
+window.Sidebar = Sidebar;
+window.TopBar = TopBar;
+</script>
+<script type="text/babel" src="app-print.jsx"></script>
+</body>
+</html>

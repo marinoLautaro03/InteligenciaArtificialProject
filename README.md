@@ -50,6 +50,42 @@ El backend usa `backend/.env` y espera estas variables:
 Hoy el frontend no necesita variables publicas obligatorias para arrancar.
 El archivo `frontend/.env.example` deja documentado que, si mas adelante se consume la API desde otro origen, la variable publica esperable seria `VITE_API_URL`.
 
+## MCP (Claude Code)
+
+El proyecto incluye `.mcp.json.example` como plantilla para configurar los servidores MCP de Claude Code. Copialo y completá tus credenciales:
+
+```bash
+cp .mcp.json.example .mcp.json
+```
+
+En PowerShell:
+
+```powershell
+Copy-Item .mcp.json.example .mcp.json
+```
+
+El archivo `.mcp.json` está en `.gitignore` — nunca se commitea. Requiere Docker Desktop corriendo para levantar los contenedores.
+
+### Atlassian / Jira
+
+Editá `.mcp.json` y reemplazá:
+
+| Variable | Descripcion |
+|---|---|
+| `JIRA_URL` | URL de tu instancia, ej. `https://tu-dominio.atlassian.net` |
+| `JIRA_USERNAME` | Tu email de Atlassian |
+| `JIRA_API_TOKEN` | Token generado en https://id.atlassian.com/manage-api-tokens |
+
+### GitHub
+
+Editá `.mcp.json` y reemplazá:
+
+| Variable | Descripcion |
+|---|---|
+| `GITHUB_PERSONAL_ACCESS_TOKEN` | Personal Access Token generado en https://github.com/settings/tokens con scope `repo` |
+
+Reinicia Claude Code para que los cambios tomen efecto.
+
 ## PostgreSQL local
 
 El proyecto incluye `backend/docker-compose.yml` para levantar una base local.
