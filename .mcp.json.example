@@ -10,7 +10,7 @@
         "ghcr.io/sooperset/mcp-atlassian:latest"
       ],
       "env": {
-        "JIRA_URL": "https://tu-dominio.atlassian.net",
+        "JIRA_URL": "https://mnovoa.atlassian.net",
         "JIRA_USERNAME": "tu-email@dominio.com",
         "JIRA_API_TOKEN": "tu-api-token"
       }

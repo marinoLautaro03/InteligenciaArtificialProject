@@ -84,6 +84,40 @@ Editá `.mcp.json` y reemplazá:
 |---|---|
 | `GITHUB_PERSONAL_ACCESS_TOKEN` | Personal Access Token generado en https://github.com/settings/tokens con scope `repo` |
 
+> **Limitaciones del MCP de GitHub:** La integración está en fase de desarrollo. Crear pull requests desde Claude Code **no funciona**. Solo sirve para operaciones menores como leer issues, consultar ramas o buscar código.
+
+Para crear PRs y realizar operaciones completas en GitHub, usamos el **CLI oficial de GitHub (`gh`)**.
+
+#### Instalación de `gh`
+
+**Windows (winget):**
+```powershell
+winget install --id GitHub.cli
+```
+
+**Windows (Scoop):**
+```powershell
+scoop install gh
+```
+
+**macOS (Homebrew):**
+```bash
+brew install gh
+```
+
+**Linux (apt):**
+```bash
+sudo apt install gh
+```
+
+Luego autenticarse una sola vez:
+
+```bash
+gh auth login
+```
+
+Seguir las instrucciones interactivas y elegir autenticación via navegador. Una vez configurado, Claude Code puede usar `gh` directamente para crear PRs, revisar issues, mergear ramas, etc.
+
 Reinicia Claude Code para que los cambios tomen efecto.
 
 ## PostgreSQL local
