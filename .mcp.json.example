@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "atlassian": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "-e", "JIRA_URL",
+        "-e", "JIRA_USERNAME",
+        "-e", "JIRA_API_TOKEN",
+        "ghcr.io/sooperset/mcp-atlassian:latest"
+      ],
+      "env": {
+        "JIRA_URL": "https://tu-dominio.atlassian.net",
+        "JIRA_USERNAME": "tu-email@dominio.com",
+        "JIRA_API_TOKEN": "tu-api-token"
+      }
+    }
+  }
+}

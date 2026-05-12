@@ -50,6 +50,24 @@ El backend usa `backend/.env` y espera estas variables:
 Hoy el frontend no necesita variables publicas obligatorias para arrancar.
 El archivo `frontend/.env.example` deja documentado que, si mas adelante se consume la API desde otro origen, la variable publica esperable seria `VITE_API_URL`.
 
+## MCP (Claude Code)
+
+El proyecto incluye `.mcp.json.example` como plantilla para configurar servidores MCP de Claude Code (Atlassian/Jira).
+
+```bash
+cp .mcp.json.example .mcp.json
+```
+
+En PowerShell:
+
+```powershell
+Copy-Item .mcp.json.example .mcp.json
+```
+
+Luego editá `.mcp.json` y reemplazá los valores de `JIRA_URL`, `JIRA_USERNAME` y `JIRA_API_TOKEN` con tus credenciales reales. Generá un API token en https://id.atlassian.com/manage-api-tokens.
+
+El archivo `.mcp.json` está en `.gitignore` — nunca se commitea.
+
 ## PostgreSQL local
 
 El proyecto incluye `backend/docker-compose.yml` para levantar una base local.
