@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { useSignIn } from '@clerk/react'
-import { useAuth } from '@clerk/react'
+import { useSignIn, useAuth } from '@clerk/react'
 import { useNavigate } from 'react-router-dom'
 import './LoginPage.css'
 
@@ -13,27 +12,27 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const loginWithOAuth = (provider: 'oauth_google' | 'oauth_facebook') => {
-    if (!signIn) return
-    signIn.sso({
-      strategy: provider,
-      redirectUrl: `${window.location.origin}/sso-callback`,
-      redirectCallbackUrl: `${window.location.origin}/sso-callback`,
-    })
+  const loginWithOAuth = async (provider: 'oauth_google' | 'oauth_facebook') => {
+    try {
+      const result = await signIn.sso({
+        strategy: provider,
+        redirectUrl: `${window.location.origin}/sso-callback`,
+        redirectCallbackUrl: `${window.location.origin}/sso-callback`,
+      })
+      if (result.error) {
+        setError(result.error.message ?? 'Error al iniciar sesión con OAuth')
+      }
+    } catch {
+      setError('Error al conectar con el proveedor. Intentá de nuevo.')
+    }
   }
 
   const loginWithEmail = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!signIn) return
     setError('')
     setLoading(true)
     try {
-      await signIn.create({ identifier: email })
-      const pwResult = await signIn.password({ password })
-      if (pwResult.error) {
-        setError(pwResult.error.message ?? 'Error al iniciar sesión')
-        return
-      }
+      await signIn.create({ identifier: email, password })
       const finalResult = await signIn.finalize()
       if (finalResult.error) {
         setError(finalResult.error.message ?? 'Error al iniciar sesión')

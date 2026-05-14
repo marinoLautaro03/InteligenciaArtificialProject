@@ -4,7 +4,7 @@ export default function Dashboard() {
   const { signOut } = useClerk()
   const { user } = useUser()
 
-  const displayName = user?.firstName ?? user?.emailAddresses[0]?.emailAddress ?? 'Usuario'
+  const displayName = user?.firstName ?? user?.emailAddresses?.[0]?.emailAddress ?? 'Usuario'
 
   return (
     <div style={{ padding: 32, fontFamily: 'var(--font-sans)' }}>
