@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useSignIn } from '@clerk/react'
+import { useAuth } from '@clerk/react'
 import { useNavigate } from 'react-router-dom'
 import './LoginPage.css'
 
 export default function LoginPage() {
-  const { signIn, isLoaded } = useSignIn()
+  const { signIn } = useSignIn()
+  const { isLoaded } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -12,24 +14,32 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
 
   const loginWithOAuth = (provider: 'oauth_google' | 'oauth_facebook') => {
-    if (!isLoaded) return
-    signIn.authenticateWithRedirect({
+    if (!signIn) return
+    signIn.sso({
       strategy: provider,
-      redirectUrl: '/sso-callback',
-      redirectUrlComplete: '/',
+      redirectUrl: `${window.location.origin}/sso-callback`,
+      redirectCallbackUrl: `${window.location.origin}/sso-callback`,
     })
   }
 
   const loginWithEmail = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!isLoaded) return
+    if (!signIn) return
     setError('')
     setLoading(true)
     try {
-      const result = await signIn.create({ identifier: email, password })
-      if (result.status === 'complete') {
-        navigate('/')
+      await signIn.create({ identifier: email })
+      const pwResult = await signIn.password({ password })
+      if (pwResult.error) {
+        setError(pwResult.error.message ?? 'Error al iniciar sesión')
+        return
       }
+      const finalResult = await signIn.finalize()
+      if (finalResult.error) {
+        setError(finalResult.error.message ?? 'Error al iniciar sesión')
+        return
+      }
+      navigate('/')
     } catch (err: unknown) {
       const clerkError = err as { errors?: { message: string }[] }
       setError(clerkError.errors?.[0]?.message ?? 'Error al iniciar sesión')
