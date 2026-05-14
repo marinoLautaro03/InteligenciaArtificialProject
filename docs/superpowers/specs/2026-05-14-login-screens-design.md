@@ -168,12 +168,18 @@ Copiar las variables CSS del prototipo al `:root` de `index.css`:
 
 ## Verificación
 
+### Checks automáticos
 1. `pnpm --filter frontend lint` → sin errores de tipos
-2. `pnpm --filter frontend dev` → dev server arranca
-3. Navegar a `http://localhost:5173` → redirige a `/login`
-4. Login con Google → OAuth completa → redirige a `/`  → muestra Dashboard placeholder
-5. Login con Facebook → ídem
-6. Login con email/password → redirige a `/`
-7. Botón logout → redirige a `/login`
-8. Navegar a `http://localhost:5173` sin sesión → redirige a `/login`
-9. Chrome DevTools → sin errores en consola
+2. `pnpm --filter frontend build` → build de producción sin errores
+
+### Validación manual con Chrome DevTools MCP
+Con el dev server corriendo (`pnpm --filter frontend dev`), usar el MCP de Chrome DevTools para:
+
+3. `navigate_page` a `http://localhost:5173` → verificar que redirige a `/login`
+4. `take_screenshot` → confirmar que el layout 2 columnas renderiza correctamente
+5. `list_console_messages(types: ["error", "warn"])` → sin errores; el warn de Clerk dev keys es esperado
+6. Completar login con Google via `click` en el botón OAuth → verificar redirect a `/sso-callback` y luego a `/`
+7. `take_screenshot` → confirmar que el Dashboard placeholder muestra el nombre/email del usuario
+8. `click` en botón logout → verificar redirect a `/login`
+9. `navigate_page` a `http://localhost:5173` sin sesión → confirmar redirect a `/login`
+10. `list_console_messages(types: ["error"])` → sin errores nuevos
