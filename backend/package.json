@@ -9,6 +9,7 @@
     "start": "node dist/index.js",
     "test:e2e": "vitest run --config vitest.config.ts",
     "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "lint": "tsc --noEmit"
   },
