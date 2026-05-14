@@ -75,7 +75,21 @@ Zod schemas in `*.schemas.ts` define request payloads. Drizzle table types are i
 
 ### Frontend
 
-Standard React + Vite scaffold. No routing or state management library added yet.
+React + Vite scaffold with **React Router DOM** for routing and **Clerk v6** for authentication.
+
+Key files:
+- `frontend/src/main.tsx`: Wraps the app with `<ClerkProvider>` and `<BrowserRouter>`.
+- `frontend/src/App.tsx`: Defines routes — `/login` (public), `/sso-callback` (OAuth redirect), `/*` (protected).
+- `frontend/src/components/ProtectedRoute.tsx`: Redirects unauthenticated users to `/login`.
+- `frontend/src/pages/LoginPage.tsx`: Custom two-column login page with email/password and Google OAuth via Clerk's `useSignIn` signal-based API.
+- `frontend/src/pages/Dashboard.tsx`: Placeholder protected screen with logout button.
+
+Clerk uses the signal-based API (`useSignIn().signIn` is a signal, not a plain object). Always access `.value` when reading signal state (e.g., `signIn.value?.status`).
+
+Routes:
+- `/login` — unauthenticated landing; redirects to `/` if already signed in
+- `/sso-callback` — handles OAuth redirect from Clerk (`AuthenticateWithRedirectCallback`)
+- `/*` — protected; redirects to `/login` if not signed in
 
 ### Design source of truth — `prototype/`
 
@@ -121,3 +135,12 @@ Copy-Item frontend/.env.example frontend/.env
 ```
 
 Backend requires `DATABASE_URL` (PostgreSQL connection string) and optionally `PORT` (default `3001`).
+
+Frontend requires `VITE_CLERK_PUBLISHABLE_KEY` (from the Clerk dashboard for the project's development instance).
+
+### Test credentials (Clerk dev instance)
+
+| Field    | Value                  |
+|----------|------------------------|
+| Email    | `test@google.com`      |
+| Password | `SocialContentStudio`  |
