@@ -32,16 +32,19 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
     try {
-      await signIn.create({ identifier: email, password })
+      const createResult = await signIn.create({ identifier: email, password })
+      if (createResult.error) {
+        setError(createResult.error.message ?? 'Error al iniciar sesión')
+        return
+      }
       const finalResult = await signIn.finalize()
       if (finalResult.error) {
         setError(finalResult.error.message ?? 'Error al iniciar sesión')
         return
       }
       navigate('/')
-    } catch (err: unknown) {
-      const clerkError = err as { errors?: { message: string }[] }
-      setError(clerkError.errors?.[0]?.message ?? 'Error al iniciar sesión')
+    } catch {
+      setError('Error al iniciar sesión. Verificá tus datos e intentá de nuevo.')
     } finally {
       setLoading(false)
     }
