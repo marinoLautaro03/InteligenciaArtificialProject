@@ -1,8 +1,11 @@
 import { serve } from "@hono/node-server";
 import { createApp } from "./app.js";
+import { createAuthenticator } from "./auth/auth.js";
 import { env } from "./env.js";
 
-const app = createApp();
+const app = createApp({
+  authenticator: createAuthenticator(),
+});
 
 serve({
   fetch: app.fetch,
