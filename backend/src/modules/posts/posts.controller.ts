@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import type { Authenticator } from "../../auth/auth.js";
+import type { ProjectsService } from "../projects/projects.service.js";
 import {
   generatePostSchema,
   postIdParamsSchema,
@@ -8,7 +9,11 @@ import {
 } from "./posts.schemas.js";
 import type { PostsService } from "./posts.service.js";
 
-export const createPostsController = (postsService: PostsService, authenticate: Authenticator) => {
+export const createPostsController = (
+  postsService: PostsService,
+  projectsService: ProjectsService,
+  authenticate: Authenticator,
+) => {
   const controller = new Hono();
 
   controller.get("/:projectId/posts", async (c) => {
@@ -69,7 +74,22 @@ export const createPostsController = (postsService: PostsService, authenticate: 
       );
     }
 
-    const post = await postsService.generatePost(params.data.projectId, user.userId, result.data);
+    const project = await projectsService.findByIdForOwner(params.data.projectId, user.userId);
+
+    if (!project) {
+      return c.json({ error: "Project not found" }, 404);
+    }
+
+    const post = await postsService.generatePost(
+      {
+        id: project.id,
+        name: project.name,
+        description: project.description,
+        primaryColor: project.primaryColor,
+      },
+      user.userId,
+      result.data,
+    );
     return c.json(post, 201);
   });
 

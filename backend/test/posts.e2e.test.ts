@@ -4,9 +4,15 @@ import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Authenticator } from "../src/auth/auth.js";
 import { createApp } from "../src/app.js";
+import type { AiService } from "../src/modules/posts/ai.js";
 import type { HealthRepository } from "../src/modules/health/health.repository.js";
 import type { Post, PostsRepository } from "../src/modules/posts/posts.repository.js";
 import type { Project, ProjectsRepository } from "../src/modules/projects/projects.repository.js";
+
+const createMockAiService = (): AiService => ({
+  generatePostText: async () => "Mock AI generated post text for testing purposes.",
+  generatePostImage: async () => "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+});
 
 const createInMemoryHealthRepository = (): HealthRepository => ({
   getStatus: async () => ({
@@ -147,6 +153,7 @@ describe("posts module e2e", () => {
   beforeEach(() => {
     const app = createApp({
       authenticator: createTestAuthenticator(),
+      aiService: createMockAiService(),
       healthRepository: createInMemoryHealthRepository(),
       postsRepository: createInMemoryPostsRepository(),
       projectsRepository: createInMemoryProjectsRepository(),
@@ -384,12 +391,14 @@ describe("posts module e2e", () => {
     it("isolates posts by project ownership", async () => {
       const ownerOneApp = createApp({
         authenticator: createTestAuthenticator("user_123"),
+        aiService: createMockAiService(),
         healthRepository: createInMemoryHealthRepository(),
         postsRepository: createInMemoryPostsRepository(),
         projectsRepository: createInMemoryProjectsRepository(),
       });
       const ownerTwoApp = createApp({
         authenticator: createTestAuthenticator("user_999"),
+        aiService: createMockAiService(),
         healthRepository: createInMemoryHealthRepository(),
         postsRepository: createInMemoryPostsRepository(),
         projectsRepository: createInMemoryProjectsRepository(),
