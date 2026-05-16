@@ -10,4 +10,3 @@ frontend/.env.local
 .idea
 .ai
 .claude/settings.local.json
-.claude/settings.local.json

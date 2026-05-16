@@ -7,7 +7,7 @@ export default function LoginPage() {
   const { signIn } = useSignIn()
   const { isLoaded } = useAuth()
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -32,9 +32,14 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
     try {
-      const createResult = await signIn.create({ identifier: email, password })
+      const createResult = await signIn.create({ identifier: username })
       if (createResult.error) {
         setError(createResult.error.message ?? 'Error al iniciar sesión')
+        return
+      }
+      const pwResult = await signIn.password({ password })
+      if (pwResult.error) {
+        setError(pwResult.error.message ?? 'Error al iniciar sesión')
         return
       }
       const finalResult = await signIn.finalize()
@@ -141,17 +146,18 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="divider">o con email</div>
+          <div className="divider">o con usuario</div>
 
           <form onSubmit={loginWithEmail} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div className="field">
               <input
                 className="input"
-                type="email"
-                placeholder="tu@email.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+                type="text"
+                placeholder="Nombre de usuario"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
                 required
+                autoComplete="username"
               />
             </div>
             <div className="field">
