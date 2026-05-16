@@ -142,6 +142,17 @@ Para detener el contenedor:
 docker compose -f backend/docker-compose.yml down
 ```
 
+## Credenciales de prueba (Clerk dev instance)
+
+Para iniciar sesión en el entorno de desarrollo usá el usuario de prueba del dashboard de Clerk:
+
+| Campo    | Valor                 |
+|----------|-----------------------|
+| Username | `test`                |
+| Password | `SocialContentStudio` |
+
+> El login usa **username** como identificador, no email. El email asociado a la cuenta es `test@gmail.com` pero no sirve para iniciar sesión.
+
 ## Prototype
 
 El directorio `prototype/` contiene un prototipo estático de la aplicación. Es documentación de referencia — no se modifica ni se importa desde el código.

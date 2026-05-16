@@ -142,5 +142,7 @@ Frontend requires `VITE_CLERK_PUBLISHABLE_KEY` (from the Clerk dashboard for the
 
 | Field    | Value                  |
 |----------|------------------------|
-| Email    | `test@google.com`      |
+| Username | `test`                 |
 | Password | `SocialContentStudio`  |
+
+> The Clerk instance uses **username** as the sign-in identifier (not email). The email associated with the test account is `test@gmail.com` but it cannot be used to log in.
