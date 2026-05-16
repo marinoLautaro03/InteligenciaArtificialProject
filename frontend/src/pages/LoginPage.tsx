@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSignIn, useAuth } from '@clerk/react'
+import {useSignIn, useAuth, SignInButton, SignUpButton} from '@clerk/react'
 import { useNavigate } from 'react-router-dom'
 import './LoginPage.css'
 
@@ -178,6 +178,9 @@ export default function LoginPage() {
 
           <div className="clerk-watermark">Secured by · Clerk</div>
         </div>
+
+        <SignInButton />
+        <SignUpButton />
       </div>
     </div>
   )

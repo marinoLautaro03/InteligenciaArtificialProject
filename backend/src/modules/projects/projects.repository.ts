@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { InferSelectModel } from "drizzle-orm";
 import { db } from "../../db/index.js";
 import type { CreateProjectInput, UpdateProjectInput } from "./projects.schemas.js";
@@ -8,11 +8,10 @@ export type Project = InferSelectModel<typeof projects>;
 
 export type ProjectsRepository = {
   findAllByOwner: (ownerId: string) => Promise<Project[]>;
-  findById: (id: number) => Promise<Project | undefined>;
+  findByIdForOwner: (id: number, ownerId: string) => Promise<Project | undefined>;
   create: (input: CreateProjectInput & { ownerId: string }) => Promise<Project>;
-  update: (id: number, input: UpdateProjectInput) => Promise<Project>;
-  archive: (id: number) => Promise<Project>;
-  delete: (id: number) => Promise<void>;
+  updateForOwner: (id: number, ownerId: string, input: UpdateProjectInput) => Promise<Project | undefined>;
+  deleteForOwner: (id: number, ownerId: string) => Promise<boolean>;
 };
 
 export const createProjectsRepository = (database = db): ProjectsRepository => ({
@@ -20,8 +19,11 @@ export const createProjectsRepository = (database = db): ProjectsRepository => (
     return database.select().from(projects).where(eq(projects.ownerId, ownerId));
   },
 
-  findById: async (id) => {
-    const [project] = await database.select().from(projects).where(eq(projects.id, id));
+  findByIdForOwner: async (id, ownerId) => {
+    const [project] = await database
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, id), eq(projects.ownerId, ownerId)));
     return project;
   },
 
@@ -34,30 +36,26 @@ export const createProjectsRepository = (database = db): ProjectsRepository => (
         ownerId: input.ownerId,
         logoUrl: input.logoUrl,
         primaryColor: input.primaryColor,
-      })
+    })
       .returning();
     return created;
   },
 
-  update: async (id, input) => {
+  updateForOwner: async (id, ownerId, input) => {
     const [updated] = await database
       .update(projects)
       .set({ ...input, updatedAt: new Date() })
-      .where(eq(projects.id, id))
+      .where(and(eq(projects.id, id), eq(projects.ownerId, ownerId)))
       .returning();
     return updated;
   },
 
-  archive: async (id) => {
-    const [archived] = await database
-      .update(projects)
-      .set({ status: "archived", updatedAt: new Date() })
-      .where(eq(projects.id, id))
-      .returning();
-    return archived;
-  },
+  deleteForOwner: async (id, ownerId) => {
+    const deletedProjects = await database
+      .delete(projects)
+      .where(and(eq(projects.id, id), eq(projects.ownerId, ownerId)))
+      .returning({ id: projects.id });
 
-  delete: async (id) => {
-    await database.delete(projects).where(eq(projects.id, id));
+    return deletedProjects.length > 0;
   },
 });

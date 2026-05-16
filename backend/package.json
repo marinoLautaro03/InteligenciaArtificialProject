@@ -16,6 +16,7 @@
   "dependencies": {
     "@clerk/backend": "^3.4.7",
     "@hono/node-server": "^1.19.6",
+    "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.1",
     "hono": "^4.10.8",
     "pg": "^8.16.3",
