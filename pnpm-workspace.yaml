@@ -1,3 +1,7 @@
 packages:
-  - "frontend"
-  - "backend"
+  - frontend
+  - backend
+
+onlyBuiltDependencies:
+  - '@clerk/shared'
+  - esbuild
