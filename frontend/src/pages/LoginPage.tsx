@@ -85,7 +85,7 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
     try {
-      const createResult = await signUp.create({ emailAddress: email, password })
+      const createResult = await signUp.create({ emailAddress: username, password })
       if (createResult.error) {
         setError(createResult.error.message ?? 'Error al crear la cuenta')
         return

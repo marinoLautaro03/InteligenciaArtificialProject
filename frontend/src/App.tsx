@@ -4,6 +4,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import AppShell from './components/AppShell';
 import ProtectedRoute from './components/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
+import Generator from './pages/Generator';
 import LoginPage from './pages/LoginPage';
 import ProjectGallery from './pages/ProjectGallery';
 
@@ -35,6 +36,7 @@ export default function App() {
       >
         <Route index element={<Dashboard />} />
         <Route path="/projects/:projectId/gallery" element={<ProjectGallery />} />
+        <Route path="/projects/:projectId/generator" element={<Generator />} />
       </Route>
     </Routes>
   );
