@@ -26,19 +26,18 @@ type AiConfig = {
 };
 
 export const createAiService = (config: AiConfig): AiService => {
-  if (!config.textBaseUrl || !config.textApiKey) {
-    throw new Error(
-      "AI text generation is not configured. Set AI_TEXT_BASE_URL and AI_TEXT_API_KEY.",
-    );
-  }
-
-  const textProvider = createOpenAI({
-    baseURL: config.textBaseUrl,
-    apiKey: config.textApiKey,
-  });
-
   return {
     generatePostText: async (input) => {
+      if (!config.textBaseUrl || !config.textApiKey) {
+        throw new Error(
+          "AI text generation is not configured. Set AI_TEXT_BASE_URL and AI_TEXT_API_KEY.",
+        );
+      }
+
+      const textProvider = createOpenAI({
+        baseURL: config.textBaseUrl,
+        apiKey: config.textApiKey,
+      });
       const system = [
         `Eres un community manager experto generando contenido para "${input.projectName}".`,
         `Descripcion del proyecto: "${input.projectDescription}"`,
