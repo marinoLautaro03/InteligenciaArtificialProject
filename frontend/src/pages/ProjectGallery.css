@@ -1,3 +1,9 @@
+.dashboard-feedback {
+  padding: 18px 0;
+  color: var(--fg-muted);
+  font-size: 13.5px;
+}
+
 .gallery-intro {
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) minmax(260px, 0.8fr);
