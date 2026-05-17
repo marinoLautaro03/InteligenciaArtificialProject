@@ -54,11 +54,7 @@ export const createApp = (dependencies: AppDependencies = {}) => {
 
   app.use(
     "*",
-    cors({
-      origin: ["http://localhost:5173"],
-      allowHeaders: ["Authorization", "Content-Type"],
-      allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    }),
+    cors(),
   );
 
   app.route("/health", createHealthController(healthService));
