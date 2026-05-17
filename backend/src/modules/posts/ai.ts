@@ -8,6 +8,7 @@ export type AiService = {
     primaryColor: string | null;
     socialMedia: string;
     userDescription: string;
+    tone: string;
   }) => Promise<string>;
 
   generatePostImage: (input: {
@@ -25,6 +26,13 @@ type AiConfig = {
   imageApiKey: string;
 };
 
+const toneHints: Record<string, string> = {
+  formal: "profesional y directo",
+  casual: "cercano y conversacional",
+  humoristico: "ligero, con humor y chispa",
+  inspiracional: "motivador y emotivo",
+};
+
 export const createAiService = (config: AiConfig): AiService => {
   return {
     generatePostText: async (input) => {
@@ -38,15 +46,18 @@ export const createAiService = (config: AiConfig): AiService => {
         baseURL: config.textBaseUrl,
         apiKey: config.textApiKey,
       });
+
       const system = [
         `Eres un community manager experto generando contenido para "${input.projectName}".`,
         `Descripcion del proyecto: "${input.projectDescription}"`,
         input.primaryColor ? `Color primario: ${input.primaryColor}` : null,
         `Red social: ${input.socialMedia}`,
+        `Tono: ${toneHints[input.tone] ?? input.tone}`,
         "",
         "Adapta el tono, la longitud y el formato a la plataforma:",
         "- Instagram: creativo, visual, con emojis y hashtags (max 2200 caracteres)",
-        "- X: conciso, directo, maximo 280 caracteres",
+        "- X: conciso, directo, maximo 280 caracteres, 2 hashtags",
+        "- LinkedIn: profesional, reflexivo, maximo 3000 caracteres, 4-5 hashtags",
         "- Facebook: conversacional, mas extenso, invita a la interaccion",
         "",
         "Responde SOLO con el contenido del post, sin explicaciones adicionales.",

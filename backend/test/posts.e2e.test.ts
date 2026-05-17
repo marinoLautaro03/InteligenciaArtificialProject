@@ -230,6 +230,41 @@ describe("posts module e2e", () => {
         .send({ socialMedia: "instagram", description: "" })
         .expect(400);
     });
+
+    it("accepts linkedin as social media", async () => {
+      const project = await createProject();
+
+      const response = await request(server)
+        .post(`/projects/${project.id}/posts/generate`)
+        .set("Authorization", "Bearer test-token")
+        .send({ socialMedia: "linkedin", description: "Professional post about our launch" })
+        .expect(201);
+
+      expect(response.body).toMatchObject({
+        socialMedia: "linkedin",
+        approved: false,
+      });
+    });
+
+    it("accepts tone parameter and uses casual as default", async () => {
+      const project = await createProject();
+
+      const withTone = await request(server)
+        .post(`/projects/${project.id}/posts/generate`)
+        .set("Authorization", "Bearer test-token")
+        .send({ socialMedia: "instagram", description: "Summer vibes", tone: "inspiracional" })
+        .expect(201);
+
+      expect(withTone.body).toMatchObject({ socialMedia: "instagram", approved: false });
+
+      const withoutTone = await request(server)
+        .post(`/projects/${project.id}/posts/generate`)
+        .set("Authorization", "Bearer test-token")
+        .send({ socialMedia: "instagram", description: "Summer vibes" })
+        .expect(201);
+
+      expect(withoutTone.body).toMatchObject({ approved: false });
+    });
   });
 
   describe("gallery (list posts)", () => {

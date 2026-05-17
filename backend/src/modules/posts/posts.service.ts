@@ -23,6 +23,7 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
         primaryColor: project.primaryColor,
         socialMedia: input.socialMedia,
         userDescription: input.description,
+        tone: input.tone,
       }),
       ai.generatePostImage({
         projectName: project.name,

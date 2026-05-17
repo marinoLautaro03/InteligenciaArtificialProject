@@ -1,7 +1,7 @@
 import { boolean, integer, pgEnum, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 import { projects } from "../projects/projects.entity.js";
 
-export const socialMediaPlatformEnum = pgEnum("social_media_platform", ["instagram", "x", "facebook"]);
+export const socialMediaPlatformEnum = pgEnum("social_media_platform", ["instagram", "x", "facebook", "linkedin"]);
 
 export const posts = pgTable("posts", {
   id: serial("id").primaryKey(),
