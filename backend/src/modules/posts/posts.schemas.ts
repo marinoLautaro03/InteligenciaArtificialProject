@@ -1,10 +1,11 @@
 import { z } from "zod";
 
-export const socialMediaEnum = z.enum(["instagram", "x", "facebook"]);
+export const socialMediaEnum = z.enum(["instagram", "x", "facebook", "linkedin"]);
 
 export const generatePostSchema = z.object({
   socialMedia: socialMediaEnum,
   description: z.string().trim().min(1),
+  tone: z.enum(["formal", "casual", "humoristico", "inspiracional"]).default("casual"),
 });
 
 export type GeneratePostInput = z.infer<typeof generatePostSchema>;

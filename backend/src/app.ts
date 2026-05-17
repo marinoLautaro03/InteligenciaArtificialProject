@@ -28,6 +28,11 @@ type AppDependencies = {
 export const createApp = (dependencies: AppDependencies = {}) => {
   const app = new Hono();
 
+  app.onError((err, c) => {
+    console.error(`[${c.req.method}] ${c.req.url}`, err);
+    return c.json({ error: err.message }, 500);
+  });
+
   const healthRepository = dependencies.healthRepository ?? createHealthRepository();
   const healthService = createHealthService(healthRepository);
   const postsRepository = dependencies.postsRepository ?? createPostsRepository();

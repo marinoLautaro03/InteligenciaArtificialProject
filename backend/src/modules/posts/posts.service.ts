@@ -13,7 +13,7 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
 
   generatePost: async (
     project: { id: number; name: string; description: string; primaryColor: string | null },
-    ownerId: string,
+    _ownerId: string,
     input: GeneratePostInput,
   ) => {
     const [text, imageUrl] = await Promise.all([
@@ -23,12 +23,12 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
         primaryColor: project.primaryColor,
         socialMedia: input.socialMedia,
         userDescription: input.description,
+        tone: input.tone,
       }),
       ai.generatePostImage({
         projectName: project.name,
         userDescription: input.description,
       }),
-      // Promise.resolve('https://via.placeholder.com/1200x630.png?text=Generated+Image'),
     ]);
 
     return postsRepository.create({

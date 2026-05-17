@@ -1,5 +1,5 @@
 import { useClerk, useUser } from '@clerk/react';
-import { Link, Outlet, useMatch } from 'react-router-dom';
+import { Link, Outlet, useLocation, useMatch } from 'react-router-dom';
 import { ProjectsProvider, useProjects } from '../context/ProjectsContext';
 
 const initialsFromName = (name: string) =>
@@ -14,6 +14,7 @@ function ShellContent() {
   const { signOut } = useClerk();
   const { user } = useUser();
   const { projects } = useProjects();
+  const location = useLocation();
 
   const projectMatch = useMatch('/projects/:projectId/*');
   const activeProjectId = projectMatch?.params.projectId
@@ -49,9 +50,15 @@ function ShellContent() {
             <div className="nav-label">{activeProject.name}</div>
             <Link
               to={`/projects/${activeProject.id}/gallery`}
-              className="nav-item active"
+              className={`nav-item${location.pathname.endsWith('/gallery') ? ' active' : ''}`}
             >
               Galería
+            </Link>
+            <Link
+              to={`/projects/${activeProject.id}/generator`}
+              className={`nav-item${location.pathname.endsWith('/generator') ? ' active' : ''}`}
+            >
+              Generador
             </Link>
           </div>
         )}
