@@ -73,6 +73,24 @@ Each domain feature lives in `backend/src/modules/<name>/` with four layers:
 
 Zod schemas in `*.schemas.ts` define request payloads. Drizzle table types are inferred with `InferSelectModel` in the repository files and re-exported from `backend/src/db/schema.ts`.
 
+### AI service
+
+`backend/src/modules/posts/ai.ts` exports `AiService` (interface) and `createAiService(config)` (factory). Two methods:
+
+- **`generatePostText`**: direct `fetch` to NVIDIA NIM (`https://integrate.api.nvidia.com/v1/chat/completions`) using streaming SSE. The model (`google/gemma-2-2b-it`) does not accept a `system` role, so the system prompt is folded into the user message. Chunks are accumulated server-side and the full string is returned.
+- **`generatePostImage`**: direct `fetch` to Azure AI Foundry at `{AI_IMAGE_BASE_URL}/providers/blackforestlabs/v1/{model-slug}?api-version=preview`. Returns a `data:image/png;base64,…` URI or a URL depending on the response shape.
+
+Config comes from env vars (all in `backend/.env`):
+
+| Variable | Purpose |
+|---|---|
+| `AI_TEXT_MODEL` | Model name passed in request body (e.g. `google/gemma-2-2b-it`) |
+| `AI_TEXT_BASE_URL` | NVIDIA NIM base URL (`https://integrate.api.nvidia.com/v1`) |
+| `AI_TEXT_API_KEY` | NVIDIA API key (`nvapi-…`) |
+| `AI_IMAGE_MODEL` | Image model name (e.g. `FLUX.2-pro`) |
+| `AI_IMAGE_BASE_URL` | Azure AI resource root — **do not** include project path (e.g. `https://*.services.ai.azure.com`) |
+| `AI_IMAGE_API_KEY` | Azure AI API key |
+
 ### Frontend
 
 React + Vite scaffold with **React Router DOM** for routing and **Clerk v6** for authentication.
@@ -81,15 +99,19 @@ Key files:
 - `frontend/src/main.tsx`: Wraps the app with `<ClerkProvider>` and `<BrowserRouter>`.
 - `frontend/src/App.tsx`: Defines routes — `/login` (public), `/sso-callback` (OAuth redirect), `/*` (protected).
 - `frontend/src/components/ProtectedRoute.tsx`: Redirects unauthenticated users to `/login`.
+- `frontend/src/components/AppShell.tsx`: Persistent sidebar layout. Shows project-scoped nav (Galería, Generador) when a project route is active.
 - `frontend/src/pages/LoginPage.tsx`: Custom two-column login page with email/password and Google OAuth via Clerk's `useSignIn` signal-based API.
-- `frontend/src/pages/Dashboard.tsx`: Placeholder protected screen with logout button.
+- `frontend/src/pages/ProjectGallery.tsx`: Approved posts grid for a project. Links to Generator instead of opening a modal.
+- `frontend/src/pages/Generator.tsx`: Full-page post generator — network selector, brief textarea, tone selector; result panel shows generated image + copy with approve/discard actions.
 
 Clerk uses the signal-based API (`useSignIn().signIn` is a signal, not a plain object). Always access `.value` when reading signal state (e.g., `signIn.value?.status`).
 
 Routes:
 - `/login` — unauthenticated landing; redirects to `/` if already signed in
 - `/sso-callback` — handles OAuth redirect from Clerk (`AuthenticateWithRedirectCallback`)
-- `/*` — protected; redirects to `/login` if not signed in
+- `/` — dashboard (protected)
+- `/projects/:projectId/gallery` — ProjectGallery (protected)
+- `/projects/:projectId/generator` — Generator (protected)
 
 ### Design source of truth — `prototype/`
 
