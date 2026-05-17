@@ -66,7 +66,7 @@ export type Post = {
   projectId: number;
   imageUrl: string;
   text: string;
-  socialMedia: 'instagram' | 'x' | 'facebook';
+  socialMedia: 'instagram' | 'x' | 'facebook' | 'linkedin';
   approved: boolean;
   generationPrompt: string;
   createdAt: string;
@@ -74,8 +74,9 @@ export type Post = {
 };
 
 export type GeneratePostInput = {
-  socialMedia: 'instagram' | 'x' | 'facebook';
+  socialMedia: 'instagram' | 'x' | 'facebook' | 'linkedin';
   description: string;
+  tone: 'formal' | 'casual' | 'humoristico' | 'inspiracional';
 };
 
 export const postsApi = {
