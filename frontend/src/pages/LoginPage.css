@@ -51,37 +51,117 @@
   color: var(--fg-soft);
 }
 
+.login-hero .pitch-copy {
+  font-size: var(--t-md);
+  color: var(--fg-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
 .login-hero .flow {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.login-hero .flow-heading {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--fg-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.login-hero .flow-steps {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  gap: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
+  background: var(--surface);
 }
 
 .login-hero .flow-step {
-  padding: 14px 14px 16px;
-  border-right: 1px solid var(--border);
+  position: relative;
+  padding: 16px 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  border-right: 1px solid var(--border);
 }
 
 .login-hero .flow-step:last-child {
   border-right: none;
 }
 
-.login-hero .flow-step .n {
+.login-hero .flow-step-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.login-hero .flow-step-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--fg);
+}
+
+.login-hero .flow-step-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.login-hero .flow-step-n {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 9px;
   color: var(--fg-soft);
   letter-spacing: 0.1em;
 }
 
-.login-hero .flow-step .label {
-  font-size: 13px;
+.login-hero .flow-step-label {
+  font-size: 12px;
   letter-spacing: -0.01em;
   color: var(--fg);
+  line-height: 1.3;
+}
+
+.login-hero .flow-connector {
+  position: absolute;
+  top: 34px;
+  right: -6px;
+  width: 12px;
+  height: 12px;
+  border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  transform: rotate(45deg);
+  background: var(--surface);
+  z-index: 1;
+}
+
+@media (max-width: 900px) {
+  .login-hero .flow-steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .login-hero .flow-step:nth-child(2) {
+    border-right: none;
+  }
+
+  .login-hero .flow-step:nth-child(1) .flow-connector,
+  .login-hero .flow-step:nth-child(3) .flow-connector {
+    display: none;
+  }
 }
 
 .login-hero .footer {
@@ -226,6 +306,37 @@
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.btn-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 10px 16px;
+  background: #fff;
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--t-base);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--surface-2);
+  border-color: var(--fg-soft);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.login-loading {
+  padding: 32px;
+  color: var(--fg-muted);
 }
 
 .clerk-watermark {
