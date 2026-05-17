@@ -1,7 +1,8 @@
-import { useClerk, useAuth, useUser } from '@clerk/react';
+import { useAuth } from '@clerk/react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProjectForm from '../components/ProjectForm';
+import { useProjects } from '../context/ProjectsContext';
 import { projectsApi, type CreateProjectInput, type Project } from '../lib/api';
 import './Dashboard.css';
 
@@ -15,63 +16,34 @@ const initialsFromName = (name: string) =>
     .slice(0, 2)
     .toUpperCase();
 
-const formatRelativeDate = (value: string) => {
-  const date = new Date(value);
-
-  return new Intl.DateTimeFormat('es-AR', {
-    day: 'numeric',
-    month: 'short',
-  }).format(date);
-};
+const formatDate = (value: string) =>
+  new Intl.DateTimeFormat('es-AR', { day: 'numeric', month: 'short' }).format(new Date(value));
 
 export default function Dashboard() {
-  const { signOut } = useClerk();
   const { getToken } = useAuth();
-  const { user } = useUser();
   const navigate = useNavigate();
+  const { projects, status, error, setProjects } = useProjects();
 
-  const [projects, setProjects] = useState<Project[]>([]);
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('loading');
-  const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeletingId, setIsDeletingId] = useState<number | null>(null);
   const [formMode, setFormMode] = useState<FormMode | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-
-  const displayName = user?.firstName ?? user?.emailAddresses?.[0]?.emailAddress ?? 'Equipo';
+  const [openKebabId, setOpenKebabId] = useState<number | null>(null);
 
   useEffect(() => {
-    const loadProjects = async () => {
-      setStatus('loading');
-      setError('');
-
-      try {
-        const items = await projectsApi.list(getToken);
-        setProjects(items);
-        setStatus('idle');
-      } catch (loadError) {
-        setStatus('error');
-        setError(loadError instanceof Error ? loadError.message : 'No pudimos cargar los proyectos.');
-      }
-    };
-
-    void loadProjects();
-  }, [getToken]);
+    if (!openKebabId) return;
+    const close = () => setOpenKebabId(null);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [openKebabId]);
 
   const filteredProjects = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
-
-    if (!normalizedSearch) {
-      return projects;
-    }
-
-    return projects.filter((project) => {
-      return (
-        project.name.toLowerCase().includes(normalizedSearch) ||
-        project.description.toLowerCase().includes(normalizedSearch)
-      );
-    });
+    const q = search.trim().toLowerCase();
+    if (!q) return projects;
+    return projects.filter(
+      (p) => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q),
+    );
   }, [projects, search]);
 
   const openCreateModal = () => {
@@ -85,39 +57,30 @@ export default function Dashboard() {
   };
 
   const closeForm = () => {
-    if (isSubmitting) {
-      return;
-    }
-
+    if (isSubmitting) return;
     setSelectedProject(null);
     setFormMode(null);
   };
 
   const handleCreate = async (input: CreateProjectInput) => {
     setIsSubmitting(true);
-
     try {
-      const createdProject = await projectsApi.create(input, getToken);
-      setProjects((current) => [createdProject, ...current]);
+      const created = await projectsApi.create(input, getToken);
+      setProjects((current) => [created, ...current]);
       setFormMode(null);
-      setSelectedProject(null);
-      navigate(`/projects/${createdProject.id}/gallery`);
+      navigate(`/projects/${created.id}/gallery`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleUpdate = async (input: CreateProjectInput) => {
-    if (!selectedProject) {
-      return;
-    }
-
+    if (!selectedProject) return;
     setIsSubmitting(true);
-
     try {
-      const updatedProject = await projectsApi.update(selectedProject.id, input, getToken);
+      const updated = await projectsApi.update(selectedProject.id, input, getToken);
       setProjects((current) =>
-        current.map((project) => (project.id === updatedProject.id ? updatedProject : project)),
+        current.map((p) => (p.id === updated.id ? updated : p)),
       );
       setFormMode(null);
       setSelectedProject(null);
@@ -127,19 +90,12 @@ export default function Dashboard() {
   };
 
   const handleDelete = async (project: Project) => {
-    const confirmed = window.confirm(`Eliminar "${project.name}"?`);
-
-    if (!confirmed) {
-      return;
-    }
-
+    const confirmed = window.confirm(`¿Eliminar "${project.name}"?`);
+    if (!confirmed) return;
     setIsDeletingId(project.id);
-
     try {
       await projectsApi.remove(project.id, getToken);
-      setProjects((current) => current.filter((item) => item.id !== project.id));
-    } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : 'No pudimos eliminar el proyecto.');
+      setProjects((current) => current.filter((p) => p.id !== project.id));
     } finally {
       setIsDeletingId(null);
     }
@@ -148,149 +104,142 @@ export default function Dashboard() {
   const isEmpty = status === 'idle' && projects.length === 0;
 
   return (
-    <div className="dashboard-page">
-      <header className="dashboard-header">
-        <div className="dashboard-brand">
-          <div className="dashboard-brand-mark">SC</div>
-          <div>
-            <div className="dashboard-brand-title">Social Content Studio</div>
-            <div className="dashboard-brand-subtitle">Panel de proyectos</div>
-          </div>
+    <>
+      <div className="page-header">
+        <div>
+          <h1 className="page-title">Tus proyectos</h1>
+          <p className="page-sub">
+            {projects.length} {projects.length === 1 ? 'proyecto' : 'proyectos'} · cada proyecto agrupa posts y ajustes de marca.
+          </p>
         </div>
-
-        <div className="dashboard-user-actions">
-          <div className="dashboard-user-copy">
-            <span className="dashboard-user-label">Sesion activa</span>
-            <strong>{displayName}</strong>
-          </div>
-          <button className="ghost-button" onClick={() => signOut({ redirectUrl: '/login' })}>
-            Cerrar sesion
+        <div className="row">
+          <input
+            className="input dashboard-search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar…"
+          />
+          <button className="btn btn-primary" onClick={openCreateModal}>
+            + Nuevo proyecto
           </button>
         </div>
-      </header>
+      </div>
 
-      <main className="dashboard-main">
-        <section className="dashboard-hero">
-          <div>
-            <p className="dashboard-kicker">Primera parada</p>
-            <h1>Tus campanas viven aca.</h1>
-            <p className="dashboard-lead">
-              Crea proyectos para cada cliente o campana, guarda su contexto y entra directo a la
-              galeria de piezas aprobadas.
+      {status === 'loading' ? (
+        <div className="dashboard-feedback">Cargando proyectos...</div>
+      ) : null}
+
+      {status === 'error' ? (
+        <div className="error-banner">{error}</div>
+      ) : null}
+
+      {isEmpty ? (
+        <div className="dashboard-empty-state">
+          <div className="dashboard-empty-card">
+            <h3>Tu lista todavía está vacía.</h3>
+            <p>
+              Crea el primer proyecto con el nombre de la campaña, una descripción breve y el
+              objetivo principal.
             </p>
-          </div>
-
-          <div className="dashboard-hero-panel">
-            <div className="dashboard-hero-metric">
-              <span>Proyectos activos</span>
-              <strong>{projects.length}</strong>
-            </div>
-            <div className="dashboard-hero-metric">
-              <span>Listos para generar</span>
-              <strong>{projects.length > 0 ? 'Si' : 'Empeza creando uno'}</strong>
-            </div>
-          </div>
-        </section>
-
-        <section className="dashboard-toolbar">
-          <div>
-            <h2>Tus proyectos</h2>
-            <p>{projects.length} campanas para gestionar contenido, tono y piezas visuales.</p>
-          </div>
-
-          <div className="dashboard-toolbar-actions">
-            <input
-              className="project-input dashboard-search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Buscar por nombre u objetivo"
-            />
-            <button className="primary-button" onClick={openCreateModal}>
-              Nuevo proyecto
+            <button className="btn btn-primary" onClick={openCreateModal}>
+              Crear primer proyecto
             </button>
           </div>
-        </section>
+        </div>
+      ) : null}
 
-        {status === 'loading' ? <div className="dashboard-feedback">Cargando proyectos...</div> : null}
-        {status === 'error' ? <div className="dashboard-feedback dashboard-error-banner">{error}</div> : null}
+      {!isEmpty && status === 'idle' ? (
+        <section className="project-grid">
+          {filteredProjects.map((project) => (
+            <article
+              key={project.id}
+              className="project-card"
+              onClick={() => navigate(`/projects/${project.id}/gallery`)}
+            >
+              <div
+                className="project-cover"
+                style={
+                  project.primaryColor
+                    ? {
+                        background: `linear-gradient(135deg, ${project.primaryColor}, color-mix(in oklab, ${project.primaryColor} 30%, white))`,
+                      }
+                    : undefined
+                }
+              >
+                {project.logoUrl ? (
+                  <img className="project-logo" src={project.logoUrl} alt="" />
+                ) : (
+                  <span className="glyph">{initialsFromName(project.name)}</span>
+                )}
+              </div>
 
-        {isEmpty ? (
-          <section className="dashboard-empty-state">
-            <div className="dashboard-empty-card">
-              <p className="dashboard-kicker">Happy path</p>
-              <h3>Tu lista todavia esta vacia.</h3>
-              <p>
-                Crea el primer proyecto con el nombre de la campana, una descripcion breve y el
-                objetivo principal. Despues te llevamos a la galeria de piezas aprobadas.
-              </p>
-              <button className="primary-button" onClick={openCreateModal}>
-                Crear primer proyecto
-              </button>
-            </div>
-          </section>
-        ) : null}
-
-        {!isEmpty && status === 'idle' ? (
-          <section className="project-grid">
-            {filteredProjects.map((project) => (
-              <article key={project.id} className="project-card">
-                <button
-                  className="project-card-cover"
-                  style={{
-                    background: project.primaryColor
-                      ? `linear-gradient(135deg, ${project.primaryColor}, color-mix(in oklab, ${project.primaryColor} 30%, white))`
-                      : undefined,
-                  }}
-                  onClick={() => navigate(`/projects/${project.id}/gallery`)}
-                >
-                  {project.logoUrl ? (
-                    <img className="project-logo" src={project.logoUrl} alt="" />
-                  ) : (
-                    <span>{initialsFromName(project.name)}</span>
-                  )}
-                </button>
-
-                <div className="project-card-body">
-                  <div className="project-card-copy">
-                    <h3>{project.name}</h3>
-                    <p>{project.description}</p>
-                  </div>
-
-                  <div className="project-card-meta">
-                    <span>Actualizado {formatRelativeDate(project.updatedAt)}</span>
-                    <span>{project.status}</span>
-                  </div>
-
-                  <div className="project-card-actions">
-                    <button className="ghost-button" onClick={() => navigate(`/projects/${project.id}/gallery`)}>
-                      Abrir galeria
-                    </button>
-                    <button className="ghost-button" onClick={() => openEditModal(project)}>
-                      Editar
-                    </button>
+              <div className="project-card-body">
+                <div className="project-card-header">
+                  <span className="name">{project.name}</span>
+                  <div
+                    className="project-kebab"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <button
-                      className="danger-button"
-                      onClick={() => handleDelete(project)}
-                      disabled={isDeletingId === project.id}
+                      className="btn btn-ghost btn-icon"
+                      onClick={() =>
+                        setOpenKebabId(openKebabId === project.id ? null : project.id)
+                      }
                     >
-                      {isDeletingId === project.id ? 'Eliminando...' : 'Eliminar'}
+                      ⋮
                     </button>
+                    {openKebabId === project.id && (
+                      <div className="project-kebab-menu">
+                        <button
+                          className="kebab-item"
+                          onClick={() => {
+                            openEditModal(project);
+                            setOpenKebabId(null);
+                          }}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          className="kebab-item kebab-item-danger"
+                          onClick={() => {
+                            void handleDelete(project);
+                            setOpenKebabId(null);
+                          }}
+                          disabled={isDeletingId === project.id}
+                        >
+                          {isDeletingId === project.id ? 'Eliminando...' : 'Eliminar'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </article>
-            ))}
 
-            <button className="project-create-card" onClick={openCreateModal}>
-              <span>+</span>
-              <strong>Crear proyecto</strong>
-              <p>Nuevo cliente, campana o linea de contenido.</p>
-            </button>
-          </section>
-        ) : null}
-      </main>
+                <p className="desc">{project.description}</p>
+
+                <div className="meta">
+                  <span>{project.postCount} posts</span>
+                  <span>·</span>
+                  <span>{formatDate(project.updatedAt)}</span>
+                </div>
+              </div>
+            </article>
+          ))}
+
+          <button className="project-create-card" onClick={openCreateModal}>
+            <span className="plus">+</span>
+            <strong>Crear proyecto</strong>
+            <p>Nuevo cliente, campaña o línea de contenido.</p>
+          </button>
+        </section>
+      ) : null}
 
       {formMode === 'create' ? (
-        <ProjectForm key="create" isSubmitting={isSubmitting} onCancel={closeForm} onSubmit={handleCreate} />
+        <ProjectForm
+          key="create"
+          isSubmitting={isSubmitting}
+          onCancel={closeForm}
+          onSubmit={handleCreate}
+        />
       ) : null}
 
       {formMode === 'edit' ? (
@@ -302,6 +251,6 @@ export default function Dashboard() {
           onSubmit={handleUpdate}
         />
       ) : null}
-    </div>
+    </>
   );
 }
