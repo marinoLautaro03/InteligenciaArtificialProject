@@ -1,29 +1,105 @@
 import { useState } from 'react'
-import {useSignIn, useAuth, SignInButton, SignUpButton} from '@clerk/react'
+import { useSignIn, useSignUp, useAuth } from '@clerk/react'
 import { useNavigate } from 'react-router-dom'
 import './LoginPage.css'
 
+type AuthMode = 'sign-in' | 'sign-up'
+
+const FLOW_STEPS = [
+  { n: '01', label: 'Brief', icon: 'doc' },
+  { n: '02', label: 'Red social', icon: 'globe' },
+  { n: '03', label: 'Generar', icon: 'spark' },
+  { n: '04', label: 'Publicar', icon: 'upload' },
+] as const
+
+function StepIcon({ type }: { type: string }) {
+  if (type === 'doc') {
+    return (
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden>
+        <path d="M5 3.5h10a1.5 1.5 0 0 1 1.5 1.5v10a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 15V5A1.5 1.5 0 0 1 5 3.5Z" stroke="currentColor" strokeWidth="1.4" />
+        <path d="M7 7.5h6M7 10.5h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      </svg>
+    )
+  }
+  if (type === 'globe') {
+    return (
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden>
+        <circle cx="10" cy="10" r="6.5" stroke="currentColor" strokeWidth="1.4" />
+        <path d="M3.5 10h13M10 3.5c2 2.2 2 10.8 0 13M10 3.5c-2 2.2-2 10.8 0 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      </svg>
+    )
+  }
+  if (type === 'spark') {
+    return (
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden>
+        <path d="M10 2.5l1.2 4.1 4.1 1.2-4.1 1.2L10 13.1 8.8 9 4.7 7.8l4.1-1.2L10 2.5Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+        <path d="M14.5 14.5l1 3.5 3.5-1-1-3.5-3.5 1Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+      </svg>
+    )
+  }
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden>
+      <path d="M4 10.5 10 4.5l6 6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 4.5v11M6.5 16h7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export default function LoginPage() {
   const { signIn } = useSignIn()
+  const { signUp } = useSignUp()
   const { isLoaded } = useAuth()
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [authMode, setAuthMode] = useState<AuthMode>('sign-in')
+
+  const isSignIn = authMode === 'sign-in'
+
+  const switchAuthMode = () => {
+    setAuthMode(isSignIn ? 'sign-up' : 'sign-in')
+    setError('')
+  }
 
   const loginWithOAuth = async (provider: 'oauth_google' | 'oauth_facebook') => {
+    setError('')
     try {
-      const result = await signIn.sso({
+      const auth = isSignIn ? signIn : signUp
+      const result = await auth.sso({
         strategy: provider,
         redirectUrl: `${window.location.origin}/sso-callback`,
         redirectCallbackUrl: `${window.location.origin}/sso-callback`,
       })
       if (result.error) {
-        setError(result.error.message ?? 'Error al iniciar sesión con OAuth')
+        setError(result.error.message ?? 'Error al conectar con el proveedor.')
       }
     } catch {
       setError('Error al conectar con el proveedor. Intentá de nuevo.')
+    }
+  }
+
+  const registerWithEmail = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      const createResult = await signUp.create({ emailAddress: email, password })
+      if (createResult.error) {
+        setError(createResult.error.message ?? 'Error al crear la cuenta')
+        return
+      }
+      const finalResult = await signUp.finalize()
+      if (finalResult.error) {
+        setError(finalResult.error.message ?? 'Error al crear la cuenta')
+        return
+      }
+      navigate('/')
+    } catch {
+      setError('Error al crear la cuenta. Verificá tus datos e intentá de nuevo.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -56,8 +132,15 @@ export default function LoginPage() {
   }
 
   if (!isLoaded) {
-    return <div style={{ padding: 32, color: 'var(--fg-muted)' }}>Cargando…</div>
+    return <div className="login-loading">Cargando…</div>
   }
+
+  const heading = isSignIn ? 'Iniciá sesión' : 'Creá tu cuenta'
+  const subheading = isSignIn
+    ? 'Continuá con tu cuenta para acceder a tus proyectos.'
+    : 'Registrate para empezar a crear contenido.'
+  const submitLabel = loading ? 'Cargando…' : 'Continuar →'
+  const toggleLabel = isSignIn ? 'Crear cuenta' : 'Ya tengo cuenta'
 
   return (
     <div className="login-page">
@@ -98,22 +181,28 @@ export default function LoginPage() {
           <h1>
             Brief corto. <em>Post listo para publicar.</em>
           </h1>
-          <p style={{ fontSize: 'var(--t-md)', color: 'var(--fg-muted)', lineHeight: 1.6 }}>
+          <p className="pitch-copy">
             Generá contenido para redes sociales a partir de un brief simple.
             Elegí la red, el tono y el formato — el estudio hace el resto.
           </p>
-          <div className="flow">
-            {[
-              { n: '01', label: 'Brief' },
-              { n: '02', label: 'Red social' },
-              { n: '03', label: 'Generar' },
-              { n: '04', label: 'Publicar' },
-            ].map(step => (
-              <div key={step.n} className="flow-step">
-                <span className="n">{step.n}</span>
-                <span className="label">{step.label}</span>
-              </div>
-            ))}
+          <div className="flow" aria-label="Proceso en 4 pasos">
+            <p className="flow-heading">Cómo funciona</p>
+            <div className="flow-steps">
+              {FLOW_STEPS.map((step, index) => (
+                <div key={step.n} className="flow-step">
+                  <div className="flow-step-marker">
+                    <span className="flow-step-icon">
+                      <StepIcon type={step.icon} />
+                    </span>
+                    <span className="flow-step-n">{step.n}</span>
+                  </div>
+                  <span className="flow-step-label">{step.label}</span>
+                  {index < FLOW_STEPS.length - 1 && (
+                    <span className="flow-connector" aria-hidden />
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -124,8 +213,8 @@ export default function LoginPage() {
       <div className="login-form">
         <div className="clerk-card">
           <div>
-            <h2>Iniciá sesión</h2>
-            <div className="sub">Continuá con tu cuenta para acceder a tus proyectos.</div>
+            <h2>{heading}</h2>
+            <div className="sub">{subheading}</div>
           </div>
 
           <div className="oauth">
@@ -148,7 +237,10 @@ export default function LoginPage() {
 
           <div className="divider">o con usuario</div>
 
-          <form onSubmit={loginWithEmail} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <form
+            onSubmit={isSignIn ? loginWithEmail : registerWithEmail}
+            style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
+          >
             <div className="field">
               <input
                 className="input"
@@ -172,15 +264,18 @@ export default function LoginPage() {
             </div>
             {error && <div className="login-error">{error}</div>}
             <button className="btn-primary" type="submit" disabled={loading}>
-              {loading ? 'Cargando…' : 'Continuar →'}
+              {submitLabel}
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={switchAuthMode}
+              disabled={loading}
+            >
+              {toggleLabel}
             </button>
           </form>
-
-          <div className="clerk-watermark">Secured by · Clerk</div>
         </div>
-
-        <SignInButton />
-        <SignUpButton />
       </div>
     </div>
   )
