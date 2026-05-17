@@ -1,8 +1,8 @@
 import { useAuth } from '@clerk/react';
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { postsApi, projectsApi, type GeneratePostInput, type Post, type Project } from '../lib/api';
-import './Dashboard.css';
+import './ProjectGallery.css';
 
 const socialNames: Record<string, string> = {
   instagram: 'Instagram',
@@ -14,23 +14,6 @@ const socialColors: Record<string, string> = {
   instagram: '#E4405F',
   x: '#000',
   facebook: '#1877F2',
-};
-
-const buttonStyle: React.CSSProperties = {
-  padding: '8px 18px',
-  borderRadius: 8,
-  border: '1px solid var(--border)',
-  background: '#fffdf9',
-  cursor: 'pointer',
-  fontSize: 13,
-  fontWeight: 500,
-};
-
-const activeButtonStyle: React.CSSProperties = {
-  ...buttonStyle,
-  background: '#000',
-  color: '#fff',
-  borderColor: '#000',
 };
 
 export default function ProjectGallery() {
@@ -57,10 +40,8 @@ export default function ProjectGallery() {
         setError('Proyecto invalido.');
         return;
       }
-
       setStatus('loading');
       setError('');
-
       try {
         const [item, postList] = await Promise.all([
           projectsApi.getById(numericId, getToken),
@@ -69,14 +50,13 @@ export default function ProjectGallery() {
         setProject(item);
         setPosts(postList);
         setStatus('idle');
-      } catch (loadError) {
+      } catch (err) {
         setStatus('error');
-        setError(loadError instanceof Error ? loadError.message : 'No pudimos cargar la galeria.');
+        setError(err instanceof Error ? err.message : 'No pudimos cargar la galeria.');
       }
     };
-
     void loadData();
-  }, [getToken, projectId, numericId]);
+  }, [getToken, numericId]);
 
   const openGenerate = () => {
     setFormData({ socialMedia: 'instagram', description: '' });
@@ -88,7 +68,6 @@ export default function ProjectGallery() {
     if (!formData.description.trim()) return;
     setGenerating(true);
     setGeneratedPost(null);
-
     try {
       const post = await postsApi.generate(numericId, formData, getToken);
       setGeneratedPost(post);
@@ -110,187 +89,138 @@ export default function ProjectGallery() {
     }
   };
 
+  if (status === 'loading') {
+    return <div className="dashboard-feedback">Cargando galeria...</div>;
+  }
+
+  if (status === 'error') {
+    return <div className="error-banner">{error}</div>;
+  }
+
+  if (!project) return null;
+
   return (
-    <div className="dashboard-page">
-      <main className="dashboard-main gallery-shell">
-        <div className="gallery-topbar">
-          <Link className="ghost-button" to="/">
-            Volver a proyectos
-          </Link>
+    <>
+      <section className="gallery-intro">
+        <div>
+          <h1>{project.name}</h1>
+          <p>{project.description}</p>
         </div>
+        <aside className="gallery-summary-card">
+          <span>Posts aprobados</span>
+          <strong>{posts.length}</strong>
+          <small>Estas piezas son la base visual aprobada para cada red social.</small>
+          <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={openGenerate}>
+            Generar post
+          </button>
+        </aside>
+      </section>
 
-        {status === 'loading' ? (
-          <div className="dashboard-feedback">Cargando galeria...</div>
-        ) : null}
-        {status === 'error' ? (
-          <div className="dashboard-feedback dashboard-error-banner">{error}</div>
-        ) : null}
-
-        {project && status === 'idle' ? (
-          <>
-            <section className="gallery-intro">
-              <div>
-                <p className="dashboard-kicker">Galeria aprobada</p>
-                <h1>{project.name}</h1>
-                <p>{project.description}</p>
+      {posts.length === 0 ? (
+        <div className="gallery-empty-state">
+          <div className="gallery-empty-card">
+            <h3>Todavia no hay posts generados.</h3>
+            <p>Crea el primer post describiendo que necesitas y seleccionando una red social.</p>
+            <button className="btn btn-primary" onClick={openGenerate}>
+              Generar primer post
+            </button>
+          </div>
+        </div>
+      ) : (
+        <section className="gallery-grid">
+          {posts.map((post) => (
+            <article key={post.id} className="gallery-card">
+              <img src={post.imageUrl} alt="" />
+              <div className="gallery-card-body">
+                <span
+                  className="gallery-card-network"
+                  style={{ color: socialColors[post.socialMedia] }}
+                >
+                  {socialNames[post.socialMedia]}
+                </span>
+                <p className="gallery-card-text">{post.text}</p>
               </div>
-              <aside className="gallery-summary-card">
-                <span>Posts aprobados</span>
-                <strong>{posts.length}</strong>
-                <small>Estas piezas son la base visual aprobada para cada red social.</small>
-                <button className="primary-button" style={{ marginTop: 12 }} onClick={openGenerate}>
-                  Generar post
-                </button>
-              </aside>
-            </section>
-
-            {posts.length === 0 ? (
-              <section className="dashboard-empty-state">
-                <div className="dashboard-empty-card">
-                  <p className="dashboard-kicker">Galeria vacia</p>
-                  <h3>Nothing here :( Generate your first post!</h3>
-                  <p>
-                    Crea tu primer post describiendo que necesitas y seleccionando una red social.
-                  </p>
-                  <button className="primary-button" onClick={openGenerate}>
-                    Generar post
-                  </button>
-                </div>
-              </section>
-            ) : (
-              <section className="gallery-grid">
-                {posts.map((post) => (
-                  <article key={post.id} className="gallery-card">
-                    <img
-                      src={post.imageUrl}
-                      alt=""
-                      style={{ width: '100%', height: 200, objectFit: 'cover' }}
-                    />
-                    <div className="gallery-card-body">
-                      <span
-                        style={{
-                          color: socialColors[post.socialMedia],
-                          fontWeight: 600,
-                          fontSize: 12,
-                        }}
-                      >
-                        {socialNames[post.socialMedia]}
-                      </span>
-                      <p style={{ fontSize: 13, marginTop: 6, lineHeight: 1.4 }}>
-                        {post.text}
-                      </p>
-                    </div>
-                  </article>
-                ))}
-              </section>
-            )}
-          </>
-        ) : null}
-      </main>
+            </article>
+          ))}
+        </section>
+      )}
 
       {showModal ? (
         <div
-          className="project-modal-backdrop"
+          className="modal-backdrop"
           onClick={() => { if (!generating) setShowModal(false); }}
         >
-          <div className="project-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 500 }}>
+          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 500 }}>
             {generatedPost ? (
               <>
-                <h2 style={{ margin: 0 }}>Post generado</h2>
-                <div style={{ marginTop: 16 }}>
-                  <img
-                    src={generatedPost.imageUrl}
-                    alt=""
-                    style={{
-                      width: '100%',
-                      height: 220,
-                      objectFit: 'cover',
-                      borderRadius: 8,
-                    }}
-                  />
-                  <div style={{ marginTop: 12 }}>
-                    <span
-                      style={{
-                        color: socialColors[generatedPost.socialMedia],
-                        fontWeight: 600,
-                        fontSize: 12,
-                      }}
-                    >
-                      {socialNames[generatedPost.socialMedia]}
-                    </span>
-                    <p
-                      style={{
-                        marginTop: 8,
-                        fontSize: 14,
-                        lineHeight: 1.5,
-                        whiteSpace: 'pre-wrap',
-                      }}
-                    >
-                      {generatedPost.text}
-                    </p>
-                  </div>
+                <div className="modal-header">
+                  <h2>Post generado</h2>
                 </div>
-                <div
-                  className="project-modal-header"
-                  style={{ marginTop: 20, marginBottom: 0, justifyContent: 'flex-end' }}
-                >
+                <img
+                  src={generatedPost.imageUrl}
+                  alt=""
+                  style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', borderRadius: 8 }}
+                />
+                <div style={{ marginTop: 12 }}>
+                  <span
+                    className="gallery-card-network"
+                    style={{ color: socialColors[generatedPost.socialMedia] }}
+                  >
+                    {socialNames[generatedPost.socialMedia]}
+                  </span>
+                  <p className="gallery-card-text" style={{ marginTop: 8 }}>{generatedPost.text}</p>
+                </div>
+                <div className="generate-modal-actions">
                   <button
-                    className="ghost-button"
+                    className="btn btn-ghost"
                     onClick={() => { setShowModal(false); setGeneratedPost(null); }}
                   >
                     Descartar
                   </button>
-                  <button className="primary-button" onClick={() => handleApprove(generatedPost.id)}>
+                  <button className="btn btn-primary" onClick={() => handleApprove(generatedPost.id)}>
                     Aprobar
                   </button>
                 </div>
               </>
             ) : (
               <>
-                <div className="project-modal-header">
-                  <h2 style={{ margin: 0 }}>Generar nuevo post</h2>
+                <div className="modal-header">
+                  <h2>Generar nuevo post</h2>
                 </div>
-
                 <div className="project-form">
                   <div className="project-field">
-                    <label>Red social</label>
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    <span>Red social</span>
+                    <div className="row">
                       {(['instagram', 'x', 'facebook'] as const).map((platform) => (
                         <button
                           key={platform}
-                          style={formData.socialMedia === platform ? activeButtonStyle : buttonStyle}
-                          onClick={() =>
-                            setFormData((prev) => ({ ...prev, socialMedia: platform }))
-                          }
+                          className={`btn${formData.socialMedia === platform ? ' btn-primary' : ''}`}
+                          onClick={() => setFormData((p) => ({ ...p, socialMedia: platform }))}
                         >
                           {socialNames[platform]}
                         </button>
                       ))}
                     </div>
                   </div>
-
                   <div className="project-field">
-                    <label>Descripcion</label>
+                    <span>Descripcion</span>
                     <textarea
-                      className="project-input"
-                      style={{ width: '100%', minHeight: 100, resize: 'vertical' }}
+                      className="textarea"
                       placeholder="Describi que necesitas para el post..."
                       value={formData.description}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, description: e.target.value }))
-                      }
+                      onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
                     />
                   </div>
-
-                  <div
-                    className="project-modal-header"
-                    style={{ marginTop: 4, marginBottom: 0, justifyContent: 'flex-end' }}
-                  >
-                    <button className="ghost-button" onClick={() => setShowModal(false)} disabled={generating}>
+                  <div className="generate-modal-actions">
+                    <button
+                      className="btn btn-ghost"
+                      onClick={() => setShowModal(false)}
+                      disabled={generating}
+                    >
                       Cancelar
                     </button>
                     <button
-                      className="primary-button"
+                      className="btn btn-primary"
                       onClick={handleGenerate}
                       disabled={generating || !formData.description.trim()}
                     >
@@ -303,6 +233,6 @@ export default function ProjectGallery() {
           </div>
         </div>
       ) : null}
-    </div>
+    </>
   );
 }
