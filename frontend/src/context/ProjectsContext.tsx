@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useAuth } from '@clerk/react';
 import { projectsApi, type Project } from '../lib/api';
