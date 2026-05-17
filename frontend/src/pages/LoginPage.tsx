@@ -50,7 +50,7 @@ export default function LoginPage() {
   const { signUp } = useSignUp()
   const { isLoaded } = useAuth()
   const navigate = useNavigate()
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -63,7 +63,7 @@ export default function LoginPage() {
     setError('')
   }
 
-  const loginWithOAuth = async (provider: 'oauth_google' | 'oauth_facebook') => {
+  const loginWithOAuth = async (provider: 'oauth_google') => {
     setError('')
     try {
       const auth = isSignIn ? signIn : signUp
@@ -85,7 +85,14 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
     try {
-      const createResult = await signUp.create({ emailAddress: username, password })
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setError('Ingresá un email válido.')
+        return
+      }
+      const createResult = await signUp.password({
+        emailAddress: email,
+        password
+      })
       if (createResult.error) {
         setError(createResult.error.message ?? 'Error al crear la cuenta')
         return
@@ -95,6 +102,7 @@ export default function LoginPage() {
         setError(finalResult.error.message ?? 'Error al crear la cuenta')
         return
       }
+      console.log(signUp.status)
       navigate('/')
     } catch {
       setError('Error al crear la cuenta. Verificá tus datos e intentá de nuevo.')
@@ -108,7 +116,11 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
     try {
-      const createResult = await signIn.create({ identifier: username })
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setError('Ingresá un email válido.')
+        return
+      }
+      const createResult = await signIn.create({ identifier: email })
       if (createResult.error) {
         setError(createResult.error.message ?? 'Error al iniciar sesión')
         return
@@ -227,15 +239,10 @@ export default function LoginPage() {
               </svg>
               Continuar con Google
             </button>
-            <button className="oauth-btn" onClick={() => loginWithOAuth('oauth_facebook')}>
-              <svg className="ico" viewBox="0 0 16 16" fill="#1877F2">
-                <path d="M16 8A8 8 0 1 0 6.75 15.9v-5.6H4.72V8h2.03V6.24c0-2 1.19-3.1 3.01-3.1.87 0 1.78.16 1.78.16v1.96h-1c-.99 0-1.3.61-1.3 1.24V8h2.22l-.36 2.3h-1.86V16A8 8 0 0 0 16 8Z"/>
-              </svg>
-              Continuar con Facebook
-            </button>
+
           </div>
 
-          <div className="divider">o con usuario</div>
+          <div className="divider">o con email</div>
 
           <form
             onSubmit={isSignIn ? loginWithEmail : registerWithEmail}
@@ -244,12 +251,12 @@ export default function LoginPage() {
             <div className="field">
               <input
                 className="input"
-                type="text"
-                placeholder="Nombre de usuario"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
                 required
-                autoComplete="username"
+                autoComplete="email"
               />
             </div>
             <div className="field">
