@@ -60,7 +60,7 @@ export const createProjectsRepository = (database = db): ProjectsRepository => (
     const [withCount] = await database
       .select({ ...getTableColumns(projects), postCount: postCountExpr })
       .from(projects)
-      .where(eq(projects.id, updated.id));
+      .where(and(eq(projects.id, updated.id), eq(projects.ownerId, ownerId)));
 
     return withCount;
   },

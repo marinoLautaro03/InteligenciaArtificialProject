@@ -152,6 +152,7 @@ describe("projects module e2e", () => {
       id: 1,
       description: "Updated brief for the launch campaign",
       logoUrl: "https://example.com/logo.png",
+      postCount: 0,
     });
 
     await request(server).delete("/projects/1").set("Authorization", "Bearer test-token").expect(204);
