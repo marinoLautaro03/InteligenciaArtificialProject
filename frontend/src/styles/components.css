@@ -29,6 +29,12 @@
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+  pointer-events: none;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .btn-primary {
@@ -111,7 +117,9 @@
 }
 
 .input:focus,
-.textarea:focus {
+.input:focus-visible,
+.textarea:focus,
+.textarea:focus-visible {
   border-color: var(--fg);
   box-shadow: 0 0 0 3px oklch(0.92 0.004 85);
 }
@@ -166,7 +174,7 @@
   margin: 0;
 }
 
-.modal-header p {
+.modal-sub {
   margin: 0;
   color: var(--fg-muted);
 }
