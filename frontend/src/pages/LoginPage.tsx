@@ -69,8 +69,8 @@ export default function LoginPage() {
       const auth = isSignIn ? signIn : signUp
       const result = await auth.sso({
         strategy: provider,
-        redirectUrl: `${window.location.origin}/sso-callback`,
-        redirectCallbackUrl: `${window.location.origin}/sso-callback`,
+        redirectUrl: `/`,
+        redirectCallbackUrl: `/sso-callback`,
       })
       if (result.error) {
         setError(result.error.message ?? 'Error al conectar con el proveedor.')
