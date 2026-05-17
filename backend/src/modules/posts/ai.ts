@@ -8,7 +8,7 @@ export type AiService = {
     primaryColor: string | null;
     socialMedia: string;
     userDescription: string;
-    tone: string;
+    tone: "formal" | "casual" | "humoristico" | "inspiracional";
   }) => Promise<string>;
 
   generatePostImage: (input: {
@@ -26,7 +26,7 @@ type AiConfig = {
   imageApiKey: string;
 };
 
-const toneHints: Record<string, string> = {
+const toneHints: Record<"formal" | "casual" | "humoristico" | "inspiracional", string> = {
   formal: "profesional y directo",
   casual: "cercano y conversacional",
   humoristico: "ligero, con humor y chispa",

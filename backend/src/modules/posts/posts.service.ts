@@ -29,7 +29,6 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
         projectName: project.name,
         userDescription: input.description,
       }),
-      // Promise.resolve('https://via.placeholder.com/1200x630.png?text=Generated+Image'),
     ]);
 
     return postsRepository.create({

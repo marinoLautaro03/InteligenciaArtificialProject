@@ -263,7 +263,7 @@ describe("posts module e2e", () => {
         .send({ socialMedia: "instagram", description: "Summer vibes" })
         .expect(201);
 
-      expect(withoutTone.body).toMatchObject({ approved: false });
+      expect(withoutTone.body).toMatchObject({ approved: false, socialMedia: "instagram" });
     });
   });
 
