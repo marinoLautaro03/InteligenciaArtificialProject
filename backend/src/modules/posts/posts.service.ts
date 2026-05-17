@@ -13,7 +13,7 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
 
   generatePost: async (
     project: { id: number; name: string; description: string; primaryColor: string | null },
-    ownerId: string,
+    _ownerId: string,
     input: GeneratePostInput,
   ) => {
     const [text, imageUrl] = await Promise.all([
