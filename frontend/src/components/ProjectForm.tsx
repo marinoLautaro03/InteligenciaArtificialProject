@@ -23,10 +23,7 @@ const emptyState: FormState = {
 };
 
 const toFormState = (project?: Project | null): FormState => {
-  if (!project) {
-    return emptyState;
-  }
-
+  if (!project) return emptyState;
   return {
     name: project.name,
     description: project.description,
@@ -45,7 +42,6 @@ export default function ProjectForm({ initialValue, isSubmitting, onCancel, onSu
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
-
     try {
       await onSubmit({
         name: form.name.trim(),
@@ -53,26 +49,26 @@ export default function ProjectForm({ initialValue, isSubmitting, onCancel, onSu
         logoUrl: form.logoUrl.trim() || undefined,
         primaryColor: form.primaryColor.trim() || undefined,
       });
-    } catch (submissionError) {
-      setError(submissionError instanceof Error ? submissionError.message : 'No pudimos guardar el proyecto.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No pudimos guardar el proyecto.');
     }
   };
 
   return (
-    <div className="project-modal-backdrop" role="presentation" onClick={onCancel}>
+    <div className="modal-backdrop" role="presentation" onClick={onCancel}>
       <div
-        className="project-modal"
+        className="modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="project-form-title"
-        onClick={(event) => event.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="project-modal-header">
+        <div className="modal-header">
           <div>
             <h2 id="project-form-title">{title}</h2>
-            <p>Defini el nombre y el proposito de la campana para empezar a generar contenido.</p>
+            <p className="modal-sub">Defini el nombre y el proposito de la campana para empezar a generar contenido.</p>
           </div>
-          <button className="ghost-button" type="button" onClick={onCancel}>
+          <button className="btn btn-ghost" type="button" onClick={onCancel}>
             Cerrar
           </button>
         </div>
@@ -81,9 +77,9 @@ export default function ProjectForm({ initialValue, isSubmitting, onCancel, onSu
           <label className="project-field">
             <span>Nombre del proyecto</span>
             <input
-              className="project-input"
+              className="input"
               value={form.name}
-              onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+              onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))}
               placeholder="Lanzamiento otono 2026"
               required
             />
@@ -92,9 +88,9 @@ export default function ProjectForm({ initialValue, isSubmitting, onCancel, onSu
           <label className="project-field">
             <span>Descripcion y objetivo</span>
             <textarea
-              className="project-textarea"
+              className="textarea"
               value={form.description}
-              onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+              onChange={(e) => setForm((s) => ({ ...s, description: e.target.value }))}
               placeholder="Que campana es, a quien le habla y que queres lograr."
               rows={5}
               required
@@ -105,10 +101,10 @@ export default function ProjectForm({ initialValue, isSubmitting, onCancel, onSu
             <label className="project-field">
               <span>Logo URL</span>
               <input
-                className="project-input"
+                className="input"
                 type="url"
                 value={form.logoUrl}
-                onChange={(event) => setForm((current) => ({ ...current, logoUrl: event.target.value }))}
+                onChange={(e) => setForm((s) => ({ ...s, logoUrl: e.target.value }))}
                 placeholder="https://..."
               />
             </label>
@@ -120,12 +116,12 @@ export default function ProjectForm({ initialValue, isSubmitting, onCancel, onSu
                   className="project-color"
                   type="color"
                   value={form.primaryColor}
-                  onChange={(event) => setForm((current) => ({ ...current, primaryColor: event.target.value }))}
+                  onChange={(e) => setForm((s) => ({ ...s, primaryColor: e.target.value }))}
                 />
                 <input
-                  className="project-input"
+                  className="input"
                   value={form.primaryColor}
-                  onChange={(event) => setForm((current) => ({ ...current, primaryColor: event.target.value }))}
+                  onChange={(e) => setForm((s) => ({ ...s, primaryColor: e.target.value }))}
                   pattern="^#[0-9A-Fa-f]{6}$"
                   placeholder="#D97706"
                 />
@@ -133,13 +129,13 @@ export default function ProjectForm({ initialValue, isSubmitting, onCancel, onSu
             </label>
           </div>
 
-          {error ? <div className="project-error">{error}</div> : null}
+          {error ? <div className="error-banner">{error}</div> : null}
 
           <div className="project-form-actions">
-            <button className="ghost-button" type="button" onClick={onCancel}>
+            <button className="btn btn-ghost" type="button" onClick={onCancel} disabled={isSubmitting}>
               Cancelar
             </button>
-            <button className="primary-button" type="submit" disabled={isSubmitting}>
+            <button className="btn btn-primary" type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Guardando...' : submitLabel}
             </button>
           </div>

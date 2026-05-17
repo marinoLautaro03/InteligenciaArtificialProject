@@ -6,6 +6,7 @@ export type Project = {
   ownerId: string;
   logoUrl: string | null;
   primaryColor: string | null;
+  postCount: number;
   createdAt: string;
   updatedAt: string;
 };

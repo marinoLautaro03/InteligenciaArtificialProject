@@ -1,0 +1,133 @@
+.dashboard-feedback {
+  padding: 18px 0;
+  color: var(--fg-muted);
+  font-size: 13.5px;
+}
+
+.gallery-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(260px, 0.8fr);
+  gap: 18px;
+  align-items: stretch;
+  margin-bottom: 24px;
+}
+
+.gallery-intro h1 {
+  margin: 8px 0 10px;
+  font-size: clamp(28px, 4vw, 48px);
+  letter-spacing: -0.02em;
+}
+
+.gallery-intro p {
+  margin: 0;
+  color: var(--fg-muted);
+}
+
+.gallery-summary-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gallery-summary-card span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-soft);
+}
+
+.gallery-summary-card strong {
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.gallery-summary-card small {
+  color: var(--fg-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.gallery-empty-state {
+  padding: 16px 0 8px;
+}
+
+.gallery-empty-card {
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.gallery-empty-card h3 {
+  margin: 0;
+}
+
+.gallery-empty-card p {
+  margin: 0;
+  color: var(--fg-muted);
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  padding: 0 0 40px;
+}
+
+.gallery-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.gallery-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+}
+
+.gallery-card-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gallery-card-network {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.gallery-card-text {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--fg-muted);
+  margin: 0;
+}
+
+.generate-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+@media (max-width: 840px) {
+  .gallery-intro {
+    grid-template-columns: 1fr;
+  }
+}

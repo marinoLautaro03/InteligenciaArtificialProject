@@ -34,6 +34,7 @@ const createInMemoryProjectsRepository = (): ProjectsRepository => {
         primaryColor: input.primaryColor ?? null,
         createdAt: now,
         updatedAt: now,
+        postCount: 0,
       };
 
       nextId += 1;
@@ -125,6 +126,7 @@ describe("projects module e2e", () => {
     expect(listResponse.body[0]).toMatchObject({
       id: 1,
       ownerId: "user_123",
+      postCount: 0,
     });
 
     const getResponse = await request(server)
@@ -150,6 +152,7 @@ describe("projects module e2e", () => {
       id: 1,
       description: "Updated brief for the launch campaign",
       logoUrl: "https://example.com/logo.png",
+      postCount: 0,
     });
 
     await request(server).delete("/projects/1").set("Authorization", "Bearer test-token").expect(204);

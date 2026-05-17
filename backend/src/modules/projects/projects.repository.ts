@@ -1,10 +1,12 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, getTableColumns, sql } from "drizzle-orm";
 import type { InferSelectModel } from "drizzle-orm";
 import { db } from "../../db/index.js";
+import { posts } from "../posts/posts.entity.js";
 import type { CreateProjectInput, UpdateProjectInput } from "./projects.schemas.js";
 import { projects } from "./projects.entity.js";
 
-export type Project = InferSelectModel<typeof projects>;
+type DbProject = InferSelectModel<typeof projects>;
+export type Project = DbProject & { postCount: number };
 
 export type ProjectsRepository = {
   findAllByOwner: (ownerId: string) => Promise<Project[]>;
@@ -14,14 +16,19 @@ export type ProjectsRepository = {
   deleteForOwner: (id: number, ownerId: string) => Promise<boolean>;
 };
 
+const postCountExpr = sql<number>`(SELECT COUNT(*)::int FROM posts WHERE posts.project_id = ${projects.id})`;
+
 export const createProjectsRepository = (database = db): ProjectsRepository => ({
   findAllByOwner: async (ownerId) => {
-    return database.select().from(projects).where(eq(projects.ownerId, ownerId));
+    return database
+      .select({ ...getTableColumns(projects), postCount: postCountExpr })
+      .from(projects)
+      .where(eq(projects.ownerId, ownerId));
   },
 
   findByIdForOwner: async (id, ownerId) => {
     const [project] = await database
-      .select()
+      .select({ ...getTableColumns(projects), postCount: postCountExpr })
       .from(projects)
       .where(and(eq(projects.id, id), eq(projects.ownerId, ownerId)));
     return project;
@@ -36,9 +43,9 @@ export const createProjectsRepository = (database = db): ProjectsRepository => (
         ownerId: input.ownerId,
         logoUrl: input.logoUrl,
         primaryColor: input.primaryColor,
-    })
+      })
       .returning();
-    return created;
+    return { ...created, postCount: 0 };
   },
 
   updateForOwner: async (id, ownerId, input) => {
@@ -47,15 +54,22 @@ export const createProjectsRepository = (database = db): ProjectsRepository => (
       .set({ ...input, updatedAt: new Date() })
       .where(and(eq(projects.id, id), eq(projects.ownerId, ownerId)))
       .returning();
-    return updated;
+
+    if (!updated) return undefined;
+
+    const [withCount] = await database
+      .select({ ...getTableColumns(projects), postCount: postCountExpr })
+      .from(projects)
+      .where(and(eq(projects.id, updated.id), eq(projects.ownerId, ownerId)));
+
+    return withCount;
   },
 
   deleteForOwner: async (id, ownerId) => {
-    const deletedProjects = await database
+    const deleted = await database
       .delete(projects)
       .where(and(eq(projects.id, id), eq(projects.ownerId, ownerId)))
       .returning({ id: projects.id });
-
-    return deletedProjects.length > 0;
+    return deleted.length > 0;
   },
 });
