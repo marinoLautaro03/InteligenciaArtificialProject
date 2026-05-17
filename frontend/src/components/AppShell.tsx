@@ -23,7 +23,7 @@ function ShellContent() {
 
   const displayName = user?.firstName ?? user?.username ?? '';
   const displayEmail = user?.emailAddresses?.[0]?.emailAddress ?? '';
-  const userInitials = initialsFromName(displayName || displayEmail);
+  const userInitials = initialsFromName(displayName || displayEmail) || '?';
 
   return (
     <div className="app">
@@ -83,7 +83,7 @@ function ShellContent() {
           <button
             className="btn btn-ghost btn-icon"
             onClick={() => void signOut({ redirectUrl: '/login' })}
-            title="Cerrar sesion"
+            title="Cerrar sesión"
           >
             ✕
           </button>
