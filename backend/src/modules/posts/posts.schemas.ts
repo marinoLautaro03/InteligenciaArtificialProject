@@ -22,3 +22,9 @@ export const postIdParamsSchema = z.object({
 export const postsQuerySchema = z.object({
   includeUnapproved: z.coerce.boolean().optional(),
 });
+
+export const updatePostSchema = z.object({
+  text: z.string().trim().min(1),
+});
+
+export type UpdatePostInput = z.infer<typeof updatePostSchema>;
