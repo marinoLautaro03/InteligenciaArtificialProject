@@ -25,6 +25,9 @@ export default function ProjectGallery() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [status, setStatus] = useState<'loading' | 'idle' | 'error'>('loading');
   const [error, setError] = useState('');
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editText, setEditText] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const numericId = Number(projectId);
 
@@ -52,6 +55,43 @@ export default function ProjectGallery() {
     };
     void loadData();
   }, [getToken, numericId]);
+
+  const handleStartEdit = (post: Post) => {
+    setEditingId(post.id);
+    setEditText(post.text);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditText('');
+  };
+
+  const handleSave = async (postId: number) => {
+    if (!editText.trim()) return;
+    setSaving(true);
+    setError('');
+    try {
+      const updated = await postsApi.update(numericId, postId, { text: editText }, getToken);
+      setPosts((prev) => prev.map((p) => (p.id === postId ? updated : p)));
+      setEditingId(null);
+      setEditText('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al guardar.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (postId: number) => {
+    if (!window.confirm('¿Eliminar este post? Esta acción no se puede deshacer.')) return;
+    setError('');
+    try {
+      await postsApi.delete(numericId, postId, getToken);
+      setPosts((prev) => prev.filter((p) => p.id !== postId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al eliminar.');
+    }
+  };
 
   if (status === 'loading') {
     return <div className="dashboard-feedback">Cargando galería…</div>;
@@ -84,6 +124,8 @@ export default function ProjectGallery() {
         </aside>
       </section>
 
+      {error && <div className="error-banner">{error}</div>}
+
       {posts.length === 0 ? (
         <div className="gallery-empty-state">
           <div className="gallery-empty-card">
@@ -96,20 +138,69 @@ export default function ProjectGallery() {
         </div>
       ) : (
         <section className="gallery-grid">
-          {posts.map((post) => (
-            <article key={post.id} className="gallery-card">
-              <img src={post.imageUrl} alt="" />
-              <div className="gallery-card-body">
-                <span
-                  className="gallery-card-network"
-                  style={{ color: socialColors[post.socialMedia] }}
-                >
-                  {socialNames[post.socialMedia]}
-                </span>
-                <p className="gallery-card-text">{post.text}</p>
-              </div>
-            </article>
-          ))}
+          {posts.map((post) => {
+            const isEditing = editingId === post.id;
+            return (
+              <article key={post.id} className="gallery-card">
+                <img src={post.imageUrl} alt="" />
+                <div className="gallery-card-body">
+                  <span
+                    className="gallery-card-network"
+                    style={{ color: socialColors[post.socialMedia] }}
+                  >
+                    {socialNames[post.socialMedia]}
+                  </span>
+                  {isEditing ? (
+                    <textarea
+                      className="gallery-card-edit-area"
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      disabled={saving}
+                      autoFocus
+                    />
+                  ) : (
+                    <p className="gallery-card-text">{post.text}</p>
+                  )}
+                </div>
+                <div className="gallery-card-actions">
+                  {isEditing ? (
+                    <>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => handleSave(post.id)}
+                        disabled={saving || !editText.trim()}
+                      >
+                        {saving ? 'Guardando…' : 'Guardar'}
+                      </button>
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={handleCancelEdit}
+                        disabled={saving}
+                      >
+                        Cancelar
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => handleStartEdit(post)}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => handleDelete(post.id)}
+                        style={{ color: 'var(--danger)' }}
+                      >
+                        Eliminar
+                      </button>
+                    </>
+                  )}
+                </div>
+              </article>
+            );
+          })}
         </section>
       )}
     </>
