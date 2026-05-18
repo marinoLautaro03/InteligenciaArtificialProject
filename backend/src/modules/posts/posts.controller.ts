@@ -111,6 +111,7 @@ export const createPostsController = (
     return c.json(post);
   });
 
+  // NOTE: register all sub-resource PATCH routes (e.g. /:id/approve) before this catch-all.
   controller.patch("/:projectId/posts/:id", async (c) => {
     const user = await authenticate(c);
     const params = postIdParamsSchema.safeParse(c.req.param());
