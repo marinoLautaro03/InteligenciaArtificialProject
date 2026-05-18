@@ -57,6 +57,7 @@ export default function ProjectGallery() {
   }, [getToken, numericId]);
 
   const handleStartEdit = (post: Post) => {
+    if (editingId !== null) return;
     setEditingId(post.id);
     setEditText(post.text);
   };
