@@ -188,6 +188,10 @@ describe("posts module e2e", () => {
     it("requires auth for deleting posts", async () => {
       await request(server).delete("/projects/1/posts/1").expect(401);
     });
+
+    it("requires auth for updating posts", async () => {
+      await request(server).patch("/projects/1/posts/1").expect(401);
+    });
   });
 
   describe("generate post", () => {
@@ -419,6 +423,53 @@ describe("posts module e2e", () => {
         .delete(`/projects/${project.id}/posts/999`)
         .set("Authorization", "Bearer test-token")
         .expect(404);
+    });
+  });
+
+  describe("update post text", () => {
+    it("updates the text of an existing post", async () => {
+      const project = await createProject();
+
+      const generated = await request(server)
+        .post(`/projects/${project.id}/posts/generate`)
+        .set("Authorization", "Bearer test-token")
+        .send({ socialMedia: "instagram", description: "Original post" })
+        .expect(201);
+
+      const updated = await request(server)
+        .patch(`/projects/${project.id}/posts/${generated.body.id}`)
+        .set("Authorization", "Bearer test-token")
+        .send({ text: "Updated copy text" })
+        .expect(200);
+
+      expect(updated.body.text).toBe("Updated copy text");
+      expect(updated.body.id).toBe(generated.body.id);
+    });
+
+    it("returns 404 when updating non-existent post", async () => {
+      const project = await createProject();
+
+      await request(server)
+        .patch(`/projects/${project.id}/posts/999`)
+        .set("Authorization", "Bearer test-token")
+        .send({ text: "New text" })
+        .expect(404);
+    });
+
+    it("rejects empty text", async () => {
+      const project = await createProject();
+
+      const generated = await request(server)
+        .post(`/projects/${project.id}/posts/generate`)
+        .set("Authorization", "Bearer test-token")
+        .send({ socialMedia: "instagram", description: "Post" })
+        .expect(201);
+
+      await request(server)
+        .patch(`/projects/${project.id}/posts/${generated.body.id}`)
+        .set("Authorization", "Bearer test-token")
+        .send({ text: "" })
+        .expect(400);
     });
   });
 
