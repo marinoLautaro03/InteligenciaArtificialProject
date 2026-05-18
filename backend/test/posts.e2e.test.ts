@@ -10,8 +10,14 @@ import type { Post, PostsRepository } from "../src/modules/posts/posts.repositor
 import type { Project, ProjectsRepository } from "../src/modules/projects/projects.repository.js";
 
 const createMockAiService = (): AiService => ({
-  generatePostText: async () => "Mock AI generated post text for testing purposes.",
-  generatePostImage: async () => "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+  generateAllCopies: async () => ({
+    instagram: { copy: "Mock IG copy", hashtags: ["#ig", "#test"] },
+    x: { copy: "Mock X copy", hashtags: ["#x"] },
+    linkedin: { copy: "Mock LI copy", hashtags: ["#li", "#professional"] },
+    facebook: { copy: "Mock FB copy", hashtags: ["#fb"] },
+  }),
+  generatePostImage: async () =>
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
 });
 
 const createInMemoryHealthRepository = (): HealthRepository => ({
@@ -181,6 +187,10 @@ describe("posts module e2e", () => {
       await request(server).post("/projects/1/posts/generate").expect(401);
     });
 
+    it("requires auth for saving posts", async () => {
+      await request(server).post("/projects/1/posts/save").expect(401);
+    });
+
     it("requires auth for approving posts", async () => {
       await request(server).patch("/projects/1/posts/1/approve").expect(401);
     });
@@ -195,34 +205,24 @@ describe("posts module e2e", () => {
   });
 
   describe("generate post", () => {
-    it("generates a post with approved=false", async () => {
+    it("returns a GenerationResult with all 4 networks and imageUrl", async () => {
       const project = await createProject();
 
       const response = await request(server)
         .post(`/projects/${project.id}/posts/generate`)
         .set("Authorization", "Bearer test-token")
-        .send({ socialMedia: "instagram", description: "A cool new product launch" })
-        .expect(201);
+        .send({ description: "A cool new product launch" })
+        .expect(200);
 
       expect(response.body).toMatchObject({
-        projectId: project.id,
-        socialMedia: "instagram",
-        generationPrompt: "A cool new product launch",
-        approved: false,
+        imageUrl: expect.any(String),
+        networks: {
+          instagram: { copy: expect.any(String), hashtags: expect.any(Array) },
+          x: { copy: expect.any(String), hashtags: expect.any(Array) },
+          linkedin: { copy: expect.any(String), hashtags: expect.any(Array) },
+          facebook: { copy: expect.any(String), hashtags: expect.any(Array) },
+        },
       });
-      expect(response.body.id).toBeGreaterThan(0);
-      expect(response.body.imageUrl).toBeTruthy();
-      expect(response.body.text).toBeTruthy();
-    });
-
-    it("validates social media type", async () => {
-      const project = await createProject();
-
-      await request(server)
-        .post(`/projects/${project.id}/posts/generate`)
-        .set("Authorization", "Bearer test-token")
-        .send({ socialMedia: "tiktok", description: "Bad platform" })
-        .expect(400);
     });
 
     it("requires description", async () => {
@@ -231,43 +231,105 @@ describe("posts module e2e", () => {
       await request(server)
         .post(`/projects/${project.id}/posts/generate`)
         .set("Authorization", "Bearer test-token")
-        .send({ socialMedia: "instagram", description: "" })
+        .send({ description: "" })
         .expect(400);
     });
 
-    it("accepts linkedin as social media", async () => {
+    it("accepts tone parameter", async () => {
       const project = await createProject();
 
       const response = await request(server)
         .post(`/projects/${project.id}/posts/generate`)
         .set("Authorization", "Bearer test-token")
-        .send({ socialMedia: "linkedin", description: "Professional post about our launch" })
+        .send({ description: "Summer vibes", tone: "inspiracional" })
+        .expect(200);
+
+      expect(response.body.networks).toBeDefined();
+    });
+
+    it("returns 404 when project not found", async () => {
+      await request(server)
+        .post(`/projects/9999/posts/generate`)
+        .set("Authorization", "Bearer test-token")
+        .send({ description: "test" })
+        .expect(404);
+    });
+  });
+
+  describe("save post", () => {
+    it("creates an already-approved post from a network variant", async () => {
+      const project = await createProject();
+
+      const response = await request(server)
+        .post(`/projects/${project.id}/posts/save`)
+        .set("Authorization", "Bearer test-token")
+        .send({
+          socialMedia: "instagram",
+          text: "Great caption here",
+          hashtags: ["#one", "#two"],
+          imageUrl: "data:image/png;base64,abc",
+          generationPrompt: "A cool product",
+        })
         .expect(201);
 
       expect(response.body).toMatchObject({
-        socialMedia: "linkedin",
-        approved: false,
+        projectId: project.id,
+        socialMedia: "instagram",
+        approved: true,
       });
+      expect(response.body.text).toContain("Great caption here");
+      expect(response.body.id).toBeGreaterThan(0);
     });
 
-    it("accepts tone parameter and uses casual as default", async () => {
+    it("requires socialMedia", async () => {
       const project = await createProject();
 
-      const withTone = await request(server)
-        .post(`/projects/${project.id}/posts/generate`)
+      await request(server)
+        .post(`/projects/${project.id}/posts/save`)
         .set("Authorization", "Bearer test-token")
-        .send({ socialMedia: "instagram", description: "Summer vibes", tone: "inspiracional" })
+        .send({ text: "hi", hashtags: [], imageUrl: "http://example.com/img.png", generationPrompt: "test" })
+        .expect(400);
+    });
+
+    it("requires text", async () => {
+      const project = await createProject();
+
+      await request(server)
+        .post(`/projects/${project.id}/posts/save`)
+        .set("Authorization", "Bearer test-token")
+        .send({ socialMedia: "x", text: "", hashtags: [], imageUrl: "http://example.com/img.png", generationPrompt: "test" })
+        .expect(400);
+    });
+
+    it("saved post appears in approved gallery", async () => {
+      const project = await createProject();
+
+      await request(server)
+        .post(`/projects/${project.id}/posts/save`)
+        .set("Authorization", "Bearer test-token")
+        .send({
+          socialMedia: "linkedin",
+          text: "Professional post",
+          hashtags: ["#work"],
+          imageUrl: "data:image/png;base64,abc",
+          generationPrompt: "work stuff",
+        })
         .expect(201);
 
-      expect(withTone.body).toMatchObject({ socialMedia: "instagram", approved: false });
-
-      const withoutTone = await request(server)
-        .post(`/projects/${project.id}/posts/generate`)
+      const gallery = await request(server)
+        .get(`/projects/${project.id}/posts`)
         .set("Authorization", "Bearer test-token")
-        .send({ socialMedia: "instagram", description: "Summer vibes" })
-        .expect(201);
+        .expect(200);
 
-      expect(withoutTone.body).toMatchObject({ approved: false, socialMedia: "instagram" });
+      expect(gallery.body).toHaveLength(1);
+      expect(gallery.body[0].approved).toBe(true);
+    });
+
+    it("requires auth", async () => {
+      await request(server)
+        .post(`/projects/1/posts/save`)
+        .send({ socialMedia: "instagram", text: "hi", hashtags: [], imageUrl: "x", generationPrompt: "" })
+        .expect(401);
     });
   });
 
@@ -275,53 +337,42 @@ describe("posts module e2e", () => {
     it("returns only approved posts by default", async () => {
       const project = await createProject();
 
+      const listBeforeCreate = await request(server)
+        .get(`/projects/${project.id}/posts`)
+        .set("Authorization", "Bearer test-token")
+        .expect(200);
+
+      expect(listBeforeCreate.body).toEqual([]);
+
       const post1 = await request(server)
-        .post(`/projects/${project.id}/posts/generate`)
+        .post(`/projects/${project.id}/posts/save`)
         .set("Authorization", "Bearer test-token")
-        .send({ socialMedia: "instagram", description: "Post 1" })
+        .send({ socialMedia: "instagram", text: "Post 1", hashtags: [], imageUrl: "data:image/png;base64,abc", generationPrompt: "Post 1" })
         .expect(201);
 
-      const post2 = await request(server)
-        .post(`/projects/${project.id}/posts/generate`)
-        .set("Authorization", "Bearer test-token")
-        .send({ socialMedia: "x", description: "Post 2" })
-        .expect(201);
-
-      const listBeforeApprove = await request(server)
+      const listAfterCreate = await request(server)
         .get(`/projects/${project.id}/posts`)
         .set("Authorization", "Bearer test-token")
         .expect(200);
 
-      expect(listBeforeApprove.body).toEqual([]);
-
-      await request(server)
-        .patch(`/projects/${project.id}/posts/${post1.body.id}/approve`)
-        .set("Authorization", "Bearer test-token")
-        .expect(200);
-
-      const listAfterApprove = await request(server)
-        .get(`/projects/${project.id}/posts`)
-        .set("Authorization", "Bearer test-token")
-        .expect(200);
-
-      expect(listAfterApprove.body).toHaveLength(1);
-      expect(listAfterApprove.body[0].id).toBe(post1.body.id);
-      expect(listAfterApprove.body[0].approved).toBe(true);
+      expect(listAfterCreate.body).toHaveLength(1);
+      expect(listAfterCreate.body[0].id).toBe(post1.body.id);
+      expect(listAfterCreate.body[0].approved).toBe(true);
     });
 
     it("returns all posts with includeUnapproved=true", async () => {
       const project = await createProject();
 
       await request(server)
-        .post(`/projects/${project.id}/posts/generate`)
+        .post(`/projects/${project.id}/posts/save`)
         .set("Authorization", "Bearer test-token")
-        .send({ socialMedia: "instagram", description: "Post 1" })
+        .send({ socialMedia: "instagram", text: "Post 1", hashtags: [], imageUrl: "data:image/png;base64,abc", generationPrompt: "Post 1" })
         .expect(201);
 
       await request(server)
-        .post(`/projects/${project.id}/posts/generate`)
+        .post(`/projects/${project.id}/posts/save`)
         .set("Authorization", "Bearer test-token")
-        .send({ socialMedia: "x", description: "Post 2" })
+        .send({ socialMedia: "x", text: "Post 2", hashtags: [], imageUrl: "data:image/png;base64,abc", generationPrompt: "Post 2" })
         .expect(201);
 
       const response = await request(server)
@@ -337,19 +388,19 @@ describe("posts module e2e", () => {
     it("returns a post by id", async () => {
       const project = await createProject();
 
-      const generated = await request(server)
-        .post(`/projects/${project.id}/posts/generate`)
+      const saved = await request(server)
+        .post(`/projects/${project.id}/posts/save`)
         .set("Authorization", "Bearer test-token")
-        .send({ socialMedia: "facebook", description: "Single post" })
+        .send({ socialMedia: "facebook", text: "Single post", hashtags: [], imageUrl: "data:image/png;base64,abc", generationPrompt: "Single post" })
         .expect(201);
 
       const response = await request(server)
-        .get(`/projects/${project.id}/posts/${generated.body.id}`)
+        .get(`/projects/${project.id}/posts/${saved.body.id}`)
         .set("Authorization", "Bearer test-token")
         .expect(200);
 
       expect(response.body).toMatchObject({
-        id: generated.body.id,
+        id: saved.body.id,
         projectId: project.id,
         socialMedia: "facebook",
       });
@@ -366,23 +417,22 @@ describe("posts module e2e", () => {
   });
 
   describe("approve post", () => {
-    it("approves a generated post", async () => {
+    it("approves a saved post", async () => {
       const project = await createProject();
 
-      const generated = await request(server)
-        .post(`/projects/${project.id}/posts/generate`)
+      const saved = await request(server)
+        .post(`/projects/${project.id}/posts/save`)
         .set("Authorization", "Bearer test-token")
-        .send({ socialMedia: "instagram", description: "Approve me" })
+        .send({ socialMedia: "instagram", text: "Approve me", hashtags: [], imageUrl: "data:image/png;base64,abc", generationPrompt: "Approve me" })
         .expect(201);
 
-      expect(generated.body.approved).toBe(false);
-
       const approved = await request(server)
-        .patch(`/projects/${project.id}/posts/${generated.body.id}/approve`)
+        .patch(`/projects/${project.id}/posts/${saved.body.id}/approve`)
         .set("Authorization", "Bearer test-token")
         .expect(200);
 
       expect(approved.body.approved).toBe(true);
+      expect(approved.body.id).toBe(saved.body.id);
     });
 
     it("returns 404 when approving non-existent post", async () => {
@@ -399,19 +449,19 @@ describe("posts module e2e", () => {
     it("deletes a post", async () => {
       const project = await createProject();
 
-      const generated = await request(server)
-        .post(`/projects/${project.id}/posts/generate`)
+      const saved = await request(server)
+        .post(`/projects/${project.id}/posts/save`)
         .set("Authorization", "Bearer test-token")
-        .send({ socialMedia: "instagram", description: "Delete me" })
+        .send({ socialMedia: "instagram", text: "Delete me", hashtags: [], imageUrl: "data:image/png;base64,abc", generationPrompt: "Delete me" })
         .expect(201);
 
       await request(server)
-        .delete(`/projects/${project.id}/posts/${generated.body.id}`)
+        .delete(`/projects/${project.id}/posts/${saved.body.id}`)
         .set("Authorization", "Bearer test-token")
         .expect(204);
 
       await request(server)
-        .get(`/projects/${project.id}/posts/${generated.body.id}`)
+        .get(`/projects/${project.id}/posts/${saved.body.id}`)
         .set("Authorization", "Bearer test-token")
         .expect(404);
     });
@@ -430,20 +480,20 @@ describe("posts module e2e", () => {
     it("updates the text of an existing post", async () => {
       const project = await createProject();
 
-      const generated = await request(server)
-        .post(`/projects/${project.id}/posts/generate`)
+      const saved = await request(server)
+        .post(`/projects/${project.id}/posts/save`)
         .set("Authorization", "Bearer test-token")
-        .send({ socialMedia: "instagram", description: "Original post" })
+        .send({ socialMedia: "instagram", text: "Original post", hashtags: [], imageUrl: "data:image/png;base64,abc", generationPrompt: "Original post" })
         .expect(201);
 
       const updated = await request(server)
-        .patch(`/projects/${project.id}/posts/${generated.body.id}`)
+        .patch(`/projects/${project.id}/posts/${saved.body.id}`)
         .set("Authorization", "Bearer test-token")
         .send({ text: "Updated copy text" })
         .expect(200);
 
       expect(updated.body.text).toBe("Updated copy text");
-      expect(updated.body.id).toBe(generated.body.id);
+      expect(updated.body.id).toBe(saved.body.id);
     });
 
     it("returns 404 when updating non-existent post", async () => {
@@ -459,14 +509,14 @@ describe("posts module e2e", () => {
     it("rejects empty text", async () => {
       const project = await createProject();
 
-      const generated = await request(server)
-        .post(`/projects/${project.id}/posts/generate`)
+      const saved = await request(server)
+        .post(`/projects/${project.id}/posts/save`)
         .set("Authorization", "Bearer test-token")
-        .send({ socialMedia: "instagram", description: "Post" })
+        .send({ socialMedia: "instagram", text: "Post", hashtags: [], imageUrl: "data:image/png;base64,abc", generationPrompt: "Post" })
         .expect(201);
 
       await request(server)
-        .patch(`/projects/${project.id}/posts/${generated.body.id}`)
+        .patch(`/projects/${project.id}/posts/${saved.body.id}`)
         .set("Authorization", "Bearer test-token")
         .send({ text: "" })
         .expect(400);
@@ -500,9 +550,9 @@ describe("posts module e2e", () => {
         .expect(201);
 
       await request(ownerOneServer)
-        .post(`/projects/${projectOwner1.body.id}/posts/generate`)
+        .post(`/projects/${projectOwner1.body.id}/posts/save`)
         .set("Authorization", "Bearer test-token")
-        .send({ socialMedia: "instagram", description: "Owner 1 post" })
+        .send({ socialMedia: "instagram", text: "Owner 1 post", hashtags: [], imageUrl: "data:image/png;base64,abc", generationPrompt: "Owner 1 post" })
         .expect(201);
 
       const owner2List = await request(ownerTwoServer)

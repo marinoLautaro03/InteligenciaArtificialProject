@@ -1,13 +1,20 @@
+export type NetworkVariant = { copy: string; hashtags: string[] };
+
+export type AllNetworkCopies = {
+  instagram: NetworkVariant;
+  x: NetworkVariant;
+  linkedin: NetworkVariant;
+  facebook: NetworkVariant;
+};
 
 export type AiService = {
-  generatePostText: (input: {
+  generateAllCopies: (input: {
     projectName: string;
     projectDescription: string;
     primaryColor: string | null;
-    socialMedia: string;
     userDescription: string;
     tone: "formal" | "casual" | "humoristico" | "inspiracional";
-  }) => Promise<string>;
+  }) => Promise<AllNetworkCopies>;
 
   generatePostImage: (input: {
     projectName: string;
@@ -31,34 +38,77 @@ const toneHints: Record<"formal" | "casual" | "humoristico" | "inspiracional", s
   inspiracional: "motivador y emotivo",
 };
 
+const FALLBACK_COPIES: AllNetworkCopies = {
+  instagram: { copy: "", hashtags: [] },
+  x: { copy: "", hashtags: [] },
+  linkedin: { copy: "", hashtags: [] },
+  facebook: { copy: "", hashtags: [] },
+};
+
+function parseAllNetworkCopies(raw: string): AllNetworkCopies {
+  // Strip markdown code fences if the model wraps in ```json ... ```
+  const stripped = raw.replace(/^```[a-z]*\n?/m, "").replace(/\n?```$/m, "").trim();
+
+  // Find first { ... } block
+  const start = stripped.indexOf("{");
+  const end = stripped.lastIndexOf("}");
+  if (start === -1 || end === -1) return FALLBACK_COPIES;
+
+  try {
+    const parsed = JSON.parse(stripped.slice(start, end + 1)) as Record<string, unknown>;
+    const networks: (keyof AllNetworkCopies)[] = ["instagram", "x", "linkedin", "facebook"];
+
+    const result: AllNetworkCopies = { ...FALLBACK_COPIES };
+    for (const net of networks) {
+      const val = parsed[net];
+      if (val && typeof val === "object" && "copy" in val) {
+        result[net] = {
+          copy: String((val as Record<string, unknown>).copy ?? ""),
+          hashtags: Array.isArray((val as Record<string, unknown>).hashtags)
+            ? ((val as Record<string, unknown>).hashtags as unknown[]).map(String)
+            : [],
+        };
+      }
+    }
+    return result;
+  } catch {
+    return FALLBACK_COPIES;
+  }
+}
+
 export const createAiService = (config: AiConfig): AiService => {
   return {
-    generatePostText: async (input) => {
+    generateAllCopies: async (input) => {
       if (!config.textBaseUrl || !config.textApiKey) {
         throw new Error(
           "AI text generation is not configured. Set AI_TEXT_BASE_URL and AI_TEXT_API_KEY.",
         );
       }
 
-      const systemPrompt = [
-        `Eres un community manager experto generando contenido para "${input.projectName}".`,
-        `Descripcion del proyecto: "${input.projectDescription}"`,
+      const prompt = [
+        `Sos un community manager experto generando contenido para "${input.projectName}".`,
+        `Descripción del proyecto: "${input.projectDescription}"`,
         input.primaryColor ? `Color primario: ${input.primaryColor}` : null,
-        `Red social: ${input.socialMedia}`,
+        `Brief: "${input.userDescription}"`,
         `Tono: ${toneHints[input.tone] ?? input.tone}`,
         "",
-        "Adapta el tono, la longitud y el formato a la plataforma:",
-        "- Instagram: creativo, visual, con emojis y hashtags (max 2200 caracteres)",
-        "- X: conciso, directo, maximo 280 caracteres, 2 hashtags",
-        "- LinkedIn: profesional, reflexivo, maximo 3000 caracteres, 4-5 hashtags",
-        "- Facebook: conversacional, mas extenso, invita a la interaccion",
+        "Generá copy para las 4 redes sociales. Respondé ÚNICAMENTE con JSON válido, sin explicaciones ni markdown:",
+        `{`,
+        `  "instagram": { "copy": "texto sin hashtags", "hashtags": ["#tag1", "#tag2"] },`,
+        `  "x":         { "copy": "texto sin hashtags", "hashtags": ["#tag1"] },`,
+        `  "linkedin":  { "copy": "texto sin hashtags", "hashtags": ["#tag1", "#tag2"] },`,
+        `  "facebook":  { "copy": "texto sin hashtags", "hashtags": ["#tag1"] }`,
+        `}`,
         "",
-        "Responde SOLO con el contenido del post, sin explicaciones adicionales.",
+        "Reglas:",
+        "- Instagram: hasta 1500 caracteres, hasta 8 hashtags, creativo con emojis",
+        "- X: máximo 240 caracteres en total (copy + hashtags juntos), 2 hashtags",
+        "- LinkedIn: hasta 1300 caracteres, hasta 4 hashtags, tono profesional",
+        "- Facebook: hasta 400 caracteres, hasta 2 hashtags, conversacional",
+        "- Los hashtags van en el array, NO dentro del copy",
       ]
         .filter(Boolean)
         .join("\n");
-
-      const userContent = `${systemPrompt}\n\n${input.userDescription}`;
 
       const textRes = await fetch(`${config.textBaseUrl}/chat/completions`, {
         method: "POST",
@@ -69,8 +119,8 @@ export const createAiService = (config: AiConfig): AiService => {
         },
         body: JSON.stringify({
           model: config.textModel,
-          messages: [{ role: "user", content: userContent }],
-          temperature: 0.2,
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.3,
           top_p: 0.7,
           max_tokens: 1024,
           stream: true,
@@ -82,7 +132,7 @@ export const createAiService = (config: AiConfig): AiService => {
         throw new Error(`Text generation failed (${textRes.status}): ${body}`);
       }
 
-      let result = "";
+      let raw = "";
       const reader = textRes.body!.getReader();
       const decoder = new TextDecoder();
 
@@ -98,14 +148,14 @@ export const createAiService = (config: AiConfig): AiService => {
             const parsed = JSON.parse(data) as {
               choices: { delta: { content?: string } }[];
             };
-            result += parsed.choices[0]?.delta?.content ?? "";
+            raw += parsed.choices[0]?.delta?.content ?? "";
           } catch {
             // skip malformed SSE lines
           }
         }
       }
 
-      return result;
+      return parseAllNetworkCopies(raw);
     },
 
     generatePostImage: async (input) => {

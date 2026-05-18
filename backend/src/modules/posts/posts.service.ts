@@ -1,6 +1,11 @@
-import type { AiService } from "./ai.js";
+import type { AllNetworkCopies, AiService } from "./ai.js";
 import type { PostsRepository } from "./posts.repository.js";
-import type { GeneratePostInput } from "./posts.schemas.js";
+import type { GeneratePostInput, SavePostInput } from "./posts.schemas.js";
+
+export type GenerationResult = {
+  imageUrl: string;
+  networks: AllNetworkCopies;
+};
 
 export const createPostsService = (postsRepository: PostsRepository, ai: AiService) => ({
   findAllByProject: (projectId: number, ownerId: string, options?: { includeUnapproved?: boolean }) => {
@@ -11,17 +16,16 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
     return postsRepository.findByIdForProject(id, projectId, ownerId);
   },
 
-  generatePost: async (
+  generatePostVariants: async (
     project: { id: number; name: string; description: string; primaryColor: string | null },
     _ownerId: string,
     input: GeneratePostInput,
-  ) => {
-    const [text, imageUrl] = await Promise.all([
-      ai.generatePostText({
+  ): Promise<GenerationResult> => {
+    const [networks, imageUrl] = await Promise.all([
+      ai.generateAllCopies({
         projectName: project.name,
         projectDescription: project.description,
         primaryColor: project.primaryColor,
-        socialMedia: input.socialMedia,
         userDescription: input.description,
         tone: input.tone,
       }),
@@ -31,22 +35,32 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
       }),
     ]);
 
-    return postsRepository.create({
+    return { imageUrl, networks };
+  },
+
+  savePost: async (
+    project: { id: number; name: string },
+    _ownerId: string,
+    input: SavePostInput,
+  ) => {
+    const fullText = input.hashtags.length > 0
+      ? `${input.text}\n\n${input.hashtags.join(" ")}`
+      : input.text;
+
+    const post = await postsRepository.create({
       projectId: project.id,
-      imageUrl,
-      text,
+      imageUrl: input.imageUrl,
+      text: fullText,
       socialMedia: input.socialMedia,
-      generationPrompt: input.description,
+      generationPrompt: input.generationPrompt,
     });
+
+    return postsRepository.update(post.id, project.id, { approved: true });
   },
 
   approvePost: async (id: number, projectId: number, ownerId: string) => {
     const post = await postsRepository.findByIdForProject(id, projectId, ownerId);
-
-    if (!post) {
-      return undefined;
-    }
-
+    if (!post) return undefined;
     return postsRepository.update(id, projectId, { approved: true });
   },
 
@@ -58,11 +72,7 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
 
   deletePost: async (id: number, projectId: number, ownerId: string) => {
     const post = await postsRepository.findByIdForProject(id, projectId, ownerId);
-
-    if (!post) {
-      return false;
-    }
-
+    if (!post) return false;
     return postsRepository.remove(id, projectId);
   },
 });
