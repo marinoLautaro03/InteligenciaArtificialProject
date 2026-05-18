@@ -1,3 +1,4 @@
+import { HTTPException } from "hono/http-exception";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import type { Authenticator } from "./auth/auth.js";
@@ -29,6 +30,10 @@ export const createApp = (dependencies: AppDependencies = {}) => {
   const app = new Hono();
 
   app.onError((err, c) => {
+    // Let Hono handle HTTPException with proper status code
+    if (err instanceof HTTPException) {
+      return c.json({ error: err.message }, err.status);
+    }
     console.error(`[${c.req.method}] ${c.req.url}`, err);
     return c.json({ error: err.message }, 500);
   });
