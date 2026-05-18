@@ -82,14 +82,27 @@ export type GeneratePostInput = {
 export const postsApi = {
   list: (projectId: number, getToken: () => Promise<string | null>, options?: { includeUnapproved?: boolean }) =>
     request<Post[]>(`/projects/${projectId}/posts${options?.includeUnapproved ? '?includeUnapproved=true' : ''}`, getToken),
+
   generate: (projectId: number, input: GeneratePostInput, getToken: () => Promise<string | null>) =>
     request<Post>(`/projects/${projectId}/posts/generate`, getToken, {
       method: 'POST',
       body: JSON.stringify(input),
     }),
+
   approve: (projectId: number, postId: number, getToken: () => Promise<string | null>) =>
     request<Post>(`/projects/${projectId}/posts/${postId}/approve`, getToken, {
       method: 'PATCH',
+    }),
+
+  update: (projectId: number, postId: number, input: { text: string }, getToken: () => Promise<string | null>) =>
+    request<Post>(`/projects/${projectId}/posts/${postId}`, getToken, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    }),
+
+  delete: (projectId: number, postId: number, getToken: () => Promise<string | null>) =>
+    request<void>(`/projects/${projectId}/posts/${postId}`, getToken, {
+      method: 'DELETE',
     }),
 };
 
