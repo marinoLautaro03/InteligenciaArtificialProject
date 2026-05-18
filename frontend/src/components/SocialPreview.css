@@ -1,0 +1,205 @@
+/* ============ Social Preview Cards ============ */
+.preview-frame {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  width: 100%;
+}
+
+/* Instagram */
+.ig {
+  background: #fff;
+  color: #262626;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+.ig-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #efefef;
+}
+.ig-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, oklch(0.78 0.07 60), oklch(0.68 0.1 30));
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.ig-handle { font-size: 13px; font-weight: 600; }
+.ig-sub { font-size: 11px; color: #8e8e8e; }
+.ig-more { margin-left: auto; color: #262626; display: flex; }
+.ig-img { aspect-ratio: 1; background: var(--surface-2); overflow: hidden; }
+.ig-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ig-actions { display: flex; gap: 14px; padding: 8px 14px 6px; align-items: center; }
+.ig-actions svg { stroke: #262626; }
+.ig-actions .ig-bookmark { margin-left: auto; display: flex; }
+.ig-likes { font-size: 13px; font-weight: 600; padding: 2px 14px; }
+.ig-caption {
+  font-size: 13px;
+  padding: 4px 14px 12px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.ig-caption .sp-handle { font-weight: 600; margin-right: 6px; }
+.ig-caption .sp-tag { color: #00376b; }
+
+/* X / Twitter */
+.tw {
+  background: #fff;
+  color: #0f1419;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 12px;
+}
+.tw-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: oklch(0.7 0.05 60);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.tw-head { display: flex; align-items: center; gap: 4px; font-size: 14px; flex-wrap: wrap; }
+.tw-name { font-weight: 700; }
+.tw-handle { color: #536471; }
+.tw-text { font-size: 15px; line-height: 1.35; margin-top: 4px; white-space: pre-wrap; word-break: break-word; }
+.tw-text .sp-tag { color: #1d9bf0; }
+.tw-img {
+  margin-top: 12px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #eff3f4;
+  aspect-ratio: 16/9;
+  background: var(--surface-2);
+}
+.tw-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tw-actions {
+  display: flex;
+  gap: 24px;
+  margin-top: 12px;
+  color: #536471;
+  font-size: 13px;
+  align-items: center;
+}
+.tw-actions .tw-action { display: flex; align-items: center; gap: 6px; }
+.tw-actions svg { stroke: currentColor; }
+
+/* LinkedIn */
+.li {
+  background: #fff;
+  color: rgba(0, 0, 0, 0.9);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+.li-head { display: flex; gap: 10px; padding: 14px 16px 8px; align-items: center; }
+.li-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: oklch(0.55 0.08 240);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.li-name { font-size: 14px; font-weight: 600; }
+.li-headline { font-size: 12px; color: rgba(0, 0, 0, 0.6); line-height: 1.3; }
+.li-time { font-size: 11px; color: rgba(0, 0, 0, 0.6); margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+.li-more { margin-left: auto; color: rgba(0, 0, 0, 0.6); display: flex; }
+.li-text {
+  font-size: 14px;
+  line-height: 1.45;
+  padding: 0 16px 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.li-text .sp-tag { color: #0a66c2; font-weight: 500; }
+.li-img { aspect-ratio: 1.91/1; background: var(--surface-2); overflow: hidden; border-top: 1px solid #e9e9e9; }
+.li-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.li-actions { display: flex; padding: 4px 8px; border-top: 1px solid #e9e9e9; }
+.li-actions button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 10px;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: default;
+}
+.li-actions svg { stroke: currentColor; }
+
+/* Facebook */
+.fb {
+  background: #fff;
+  color: #050505;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+.fb-head { display: flex; gap: 10px; padding: 12px 16px 8px; align-items: center; }
+.fb-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: oklch(0.6 0.15 250);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.fb-name { font-size: 14px; font-weight: 600; }
+.fb-time { font-size: 11px; color: #65676b; display: flex; align-items: center; gap: 3px; }
+.fb-more { margin-left: auto; color: #65676b; display: flex; }
+.fb-text {
+  font-size: 14px;
+  line-height: 1.45;
+  padding: 0 16px 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.fb-text .sp-tag { color: #1877f2; }
+.fb-img { aspect-ratio: 1.91/1; background: var(--surface-2); overflow: hidden; }
+.fb-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fb-stats {
+  display: flex;
+  padding: 10px 16px 6px;
+  font-size: 12px;
+  color: #65676b;
+  align-items: center;
+  gap: 6px;
+}
+.fb-stats-right { margin-left: auto; }
+.fb-actions { display: flex; padding: 4px 8px; border-top: 1px solid #ced0d4; }
+.fb-actions button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 8px;
+  color: #65676b;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: default;
+}
+.fb-actions svg { stroke: currentColor; }

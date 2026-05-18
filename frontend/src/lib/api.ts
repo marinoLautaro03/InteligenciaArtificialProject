@@ -73,10 +73,32 @@ export type Post = {
   updatedAt: string;
 };
 
+export type NetworkVariant = {
+  copy: string;
+  hashtags: string[];
+};
+
+export type GenerationResult = {
+  imageUrl: string;
+  networks: {
+    instagram: NetworkVariant;
+    x: NetworkVariant;
+    linkedin: NetworkVariant;
+    facebook: NetworkVariant;
+  };
+};
+
 export type GeneratePostInput = {
-  socialMedia: 'instagram' | 'x' | 'facebook' | 'linkedin';
   description: string;
   tone: 'formal' | 'casual' | 'humoristico' | 'inspiracional';
+};
+
+export type SavePostInput = {
+  socialMedia: 'instagram' | 'x' | 'facebook' | 'linkedin';
+  text: string;
+  hashtags: string[];
+  imageUrl: string;
+  generationPrompt: string;
 };
 
 export const postsApi = {
@@ -84,7 +106,13 @@ export const postsApi = {
     request<Post[]>(`/projects/${projectId}/posts${options?.includeUnapproved ? '?includeUnapproved=true' : ''}`, getToken),
 
   generate: (projectId: number, input: GeneratePostInput, getToken: () => Promise<string | null>) =>
-    request<Post>(`/projects/${projectId}/posts/generate`, getToken, {
+    request<GenerationResult>(`/projects/${projectId}/posts/generate`, getToken, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+
+  save: (projectId: number, input: SavePostInput, getToken: () => Promise<string | null>) =>
+    request<Post>(`/projects/${projectId}/posts/save`, getToken, {
       method: 'POST',
       body: JSON.stringify(input),
     }),
