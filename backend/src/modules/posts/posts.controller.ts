@@ -6,6 +6,7 @@ import {
   postIdParamsSchema,
   postsQuerySchema,
   projectIdParamsSchema,
+  updatePostSchema,
 } from "./posts.schemas.js";
 import type { PostsService } from "./posts.service.js";
 
@@ -102,6 +103,36 @@ export const createPostsController = (
     }
 
     const post = await postsService.approvePost(params.data.id, params.data.projectId, user.userId);
+
+    if (!post) {
+      return c.json({ error: "Post not found" }, 404);
+    }
+
+    return c.json(post);
+  });
+
+  // NOTE: register all sub-resource PATCH routes (e.g. /:id/approve) before this catch-all.
+  controller.patch("/:projectId/posts/:id", async (c) => {
+    const user = await authenticate(c);
+    const params = postIdParamsSchema.safeParse(c.req.param());
+
+    if (!params.success) {
+      return c.json({ error: "Invalid parameters", issues: params.error.issues }, 400);
+    }
+
+    const body = await c.req.json().catch(() => undefined);
+    const result = updatePostSchema.safeParse(body);
+
+    if (!result.success) {
+      return c.json({ error: "Invalid request body", issues: result.error.issues }, 400);
+    }
+
+    const post = await postsService.updatePostText(
+      params.data.id,
+      params.data.projectId,
+      user.userId,
+      result.data.text,
+    );
 
     if (!post) {
       return c.json({ error: "Post not found" }, 404);

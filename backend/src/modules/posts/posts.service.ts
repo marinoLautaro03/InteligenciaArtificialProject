@@ -50,6 +50,12 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
     return postsRepository.update(id, projectId, { approved: true });
   },
 
+  updatePostText: async (id: number, projectId: number, ownerId: string, text: string) => {
+    const post = await postsRepository.findByIdForProject(id, projectId, ownerId);
+    if (!post) return undefined;
+    return postsRepository.update(id, projectId, { text });
+  },
+
   deletePost: async (id: number, projectId: number, ownerId: string) => {
     const post = await postsRepository.findByIdForProject(id, projectId, ownerId);
 
