@@ -28,7 +28,7 @@ export const Instagram = (p: IconProps) => (
 );
 
 export const XSocial = (p: IconProps) => (
-  <Icon {...p} d="M3 3l10 10M13 3 3 13">
+  <Icon {...p}>
     <path d="M3 3l10 10M13 3 3 13" />
   </Icon>
 );

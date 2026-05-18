@@ -1,7 +1,7 @@
 import { useAuth } from '@clerk/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { postsApi, type GenerationResult } from '../lib/api';
+import { postsApi, projectsApi, type GenerationResult, type Project } from '../lib/api';
 import SocialPreview from '../components/SocialPreview';
 import { Sparkle } from '../components/Icons';
 import './Generator.css';
@@ -37,6 +37,12 @@ export default function Generator() {
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [project, setProject] = useState<Project | null>(null);
+
+  useEffect(() => {
+    if (!numericId) return;
+    projectsApi.getById(numericId, getToken).then(setProject).catch(() => {});
+  }, [numericId, getToken]);
 
   const activeNetwork = NETWORKS.find((n) => n.id === network)!;
 
@@ -181,7 +187,7 @@ export default function Generator() {
                   copy={activeVariant.copy}
                   hashtags={activeVariant.hashtags}
                   imageUrl={result.imageUrl}
-                  projectName="Tu marca"
+                  projectName={project?.name ?? 'Tu marca'}
                 />
               )}
             </div>
