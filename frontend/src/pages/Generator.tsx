@@ -1,10 +1,12 @@
 import { useAuth } from '@clerk/react';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { postsApi, type Post } from '../lib/api';
+import { postsApi, type GenerationResult } from '../lib/api';
+import SocialPreview from '../components/SocialPreview';
+import { Sparkle } from '../components/Icons';
 import './Generator.css';
 
-type Network = 'instagram' | 'x' | 'facebook' | 'linkedin';
+type Network = 'instagram' | 'x' | 'linkedin' | 'facebook';
 type Tone = 'formal' | 'casual' | 'humoristico' | 'inspiracional';
 
 const NETWORKS: { id: Network; label: string; maxChars: number; softLimit: number; hashtags: number; aspect: string }[] = [
@@ -21,13 +23,6 @@ const TONES: { id: Tone; name: string; hint: string }[] = [
   { id: 'inspiracional', name: 'Inspiracional', hint: 'Motivador, emotivo' },
 ];
 
-const NETWORK_COLORS: Record<Network, string> = {
-  instagram: '#E4405F',
-  x: '#000',
-  linkedin: '#0A66C2',
-  facebook: '#1877F2',
-};
-
 export default function Generator() {
   const { projectId } = useParams();
   const { getToken } = useAuth();
@@ -39,7 +34,8 @@ export default function Generator() {
   const [tone, setTone] = useState<Tone>('casual');
   const [description, setDescription] = useState('');
   const [generating, setGenerating] = useState(false);
-  const [result, setResult] = useState<Post | null>(null);
+  const [result, setResult] = useState<GenerationResult | null>(null);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const activeNetwork = NETWORKS.find((n) => n.id === network)!;
@@ -50,8 +46,8 @@ export default function Generator() {
     setError('');
     setResult(null);
     try {
-      const post = await postsApi.generate(numericId, { socialMedia: network, description, tone }, getToken);
-      setResult(post);
+      const data = await postsApi.generate(numericId, { description, tone }, getToken);
+      setResult(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al generar.');
     } finally {
@@ -59,22 +55,39 @@ export default function Generator() {
     }
   };
 
-  const handleApprove = async () => {
+  const handleSave = async () => {
     if (!result) return;
+    const variant = result.networks[network];
+    setSaving(true);
+    setError('');
     try {
-      await postsApi.approve(numericId, result.id, getToken);
+      await postsApi.save(
+        numericId,
+        {
+          socialMedia: network,
+          text: variant.copy,
+          hashtags: variant.hashtags,
+          imageUrl: result.imageUrl,
+          generationPrompt: description,
+        },
+        getToken,
+      );
       navigate(`/projects/${numericId}/gallery`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al aprobar.');
+      setError(err instanceof Error ? err.message : 'Error al guardar.');
+    } finally {
+      setSaving(false);
     }
   };
+
+  const activeVariant = result?.networks[network];
 
   return (
     <>
       <div className="page-header">
         <div>
           <h1 className="page-title">Generador de post</h1>
-          <p className="page-sub">Brief → copy + imagen, adaptados a la red social.</p>
+          <p className="page-sub">Brief → copy + imagen para las 4 redes. Switcheá y guardá la que más te guste.</p>
         </div>
         <Link to={`/projects/${numericId}/gallery`} className="btn btn-ghost btn-sm">
           Ver galería
@@ -137,41 +150,40 @@ export default function Generator() {
               onClick={handleGenerate}
               disabled={generating || !description.trim()}
             >
-              {generating ? 'Generando…' : result ? 'Regenerar copy + imagen' : 'Generar'}
+              <Sparkle size={14} />
+              {generating ? 'Generando…' : result ? 'Regenerar' : 'Generar'}
             </button>
-            {result && (
-              <button className="btn btn-ghost" onClick={handleApprove}>
-                Guardar post
-              </button>
-            )}
           </div>
         </aside>
 
         <section className="result-panel">
           {generating ? (
             <div className="result-generating">
-              <span>Generando copy + imagen…</span>
+              <span>Generando copy para las 4 redes + imagen…</span>
             </div>
           ) : result ? (
-            <div className={`result-card${network === 'instagram' ? ' square' : ''}`}>
-              <img src={result.imageUrl} alt="" />
-              <div className="result-card-body">
-                <span className="result-network" style={{ color: NETWORK_COLORS[result.socialMedia as Network] }}>
-                  {NETWORKS.find((n) => n.id === result.socialMedia)?.label ?? result.socialMedia}
+            <div className="result-with-preview">
+              <div className="result-save-bar">
+                <span className="result-save-label">
+                  Mostrando: <strong>{activeNetwork.label}</strong>
                 </span>
-                <p className="result-text">{result.text}</p>
-              </div>
-              <div className="result-actions">
                 <button
-                  className="btn btn-ghost"
-                  onClick={() => setResult(null)}
+                  className="btn btn-primary btn-sm"
+                  onClick={handleSave}
+                  disabled={saving}
                 >
-                  Descartar
-                </button>
-                <button className="btn btn-primary" onClick={handleApprove}>
-                  Aprobar post
+                  {saving ? 'Guardando…' : `Guardar post de ${activeNetwork.label}`}
                 </button>
               </div>
+              {activeVariant && (
+                <SocialPreview
+                  network={network}
+                  copy={activeVariant.copy}
+                  hashtags={activeVariant.hashtags}
+                  imageUrl={result.imageUrl}
+                  projectName="Tu marca"
+                />
+              )}
             </div>
           ) : (
             <div className="result-empty">
