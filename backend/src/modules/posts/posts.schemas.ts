@@ -37,3 +37,9 @@ export const updatePostSchema = z.object({
 });
 
 export type UpdatePostInput = z.infer<typeof updatePostSchema>;
+
+export const generateImageSchema = z.object({
+  description: z.string().trim().min(1),
+});
+
+export type GenerateImageInput = z.infer<typeof generateImageSchema>;
