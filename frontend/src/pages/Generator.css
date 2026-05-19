@@ -205,3 +205,13 @@
   font-size: 13px;
   color: var(--fg-soft);
 }
+
+@media (max-width: 768px) {
+  .gen-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .result-panel {
+    min-height: unset;
+  }
+}
