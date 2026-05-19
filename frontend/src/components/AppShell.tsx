@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useClerk, useUser } from '@clerk/react';
 import { Link, Outlet, useLocation, useMatch } from 'react-router-dom';
 import { ProjectsProvider, useProjects } from '../context/ProjectsContext';
@@ -15,6 +16,12 @@ function ShellContent() {
   const { user } = useUser();
   const { projects } = useProjects();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const id = setTimeout(() => setSidebarOpen(false), 0);
+    return () => clearTimeout(id);
+  }, [location.pathname]);
 
   const projectMatch = useMatch('/projects/:projectId/*');
   const activeProjectId = projectMatch?.params.projectId
@@ -28,7 +35,7 @@ function ShellContent() {
 
   return (
     <div className="app">
-      <aside className="sidebar">
+      <aside className={`sidebar${sidebarOpen ? ' sidebar--open' : ''}`}>
         <div className="brand">
           <div className="brand-mark">SC</div>
           <div>
@@ -97,8 +104,22 @@ function ShellContent() {
         </div>
       </aside>
 
+      {sidebarOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       <div className="main">
         <div className="topbar">
+          <button
+            className="hamburger"
+            onClick={() => setSidebarOpen((o) => !o)}
+            aria-label="Abrir menú"
+          >
+            ☰
+          </button>
           <nav className="crumbs">
             {!activeProject ? (
               <span className="current">Proyectos</span>
