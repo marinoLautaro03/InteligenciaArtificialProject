@@ -51,6 +51,18 @@ export default function Generator() {
   const activeNetwork = NETWORKS.find((n) => n.id === network)!;
   const activeVariant = result?.networks[network];
 
+  const fullText = activeVariant
+    ? activeVariant.hashtags.length > 0
+      ? `${activeVariant.copy}\n\n${activeVariant.hashtags.join(' ')}`
+      : activeVariant.copy
+    : '';
+  const charCount = fullText.length;
+  const lenPct = Math.min(100, (charCount / activeNetwork.maxChars) * 100);
+  const lenState =
+    charCount > activeNetwork.maxChars ? 'over' :
+    charCount > activeNetwork.softLimit ? 'warn' : '';
+  const wordCount = activeVariant ? activeVariant.copy.split(/\s+/).filter(Boolean).length : 0;
+
   const handleGenerate = async () => {
     if (!description.trim()) return;
     setGeneratingStage('both');
@@ -286,18 +298,7 @@ export default function Generator() {
                 />
               )}
 
-              {view === 'raw' && (() => {
-                const fullText = activeVariant.hashtags.length > 0
-                  ? `${activeVariant.copy}\n\n${activeVariant.hashtags.join(' ')}`
-                  : activeVariant.copy;
-                const charCount = fullText.length;
-                const lenPct = Math.min(100, (charCount / activeNetwork.maxChars) * 100);
-                const lenState =
-                  charCount > activeNetwork.maxChars ? 'over' :
-                  charCount > activeNetwork.softLimit ? 'warn' : '';
-                const wordCount = activeVariant.copy.split(/\s+/).filter(Boolean).length;
-
-                return (
+              {view === 'raw' && (
                   <div className="result-stage">
                     <div className="result-card">
                       <div className="result-card-head">
@@ -361,8 +362,7 @@ export default function Generator() {
                       </div>
                     </div>
                   </div>
-                );
-              })()}
+              )}
 
               <div className="adjust-bar">
                 <span className="adjust-pre">/ajustar</span>
