@@ -214,4 +214,9 @@
   .result-panel {
     min-height: unset;
   }
+
+  .result-empty,
+  .result-generating {
+    min-height: unset;
+  }
 }
