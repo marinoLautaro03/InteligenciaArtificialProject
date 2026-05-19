@@ -158,7 +158,7 @@
   cursor: not-allowed;
 }
 
-@media (max-width: 840px) {
+@media (max-width: 768px) {
   .gallery-intro {
     grid-template-columns: 1fr;
   }
