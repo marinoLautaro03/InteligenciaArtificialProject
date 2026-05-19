@@ -187,24 +187,6 @@
   font-size: var(--t-sm);
 }
 
-.result-with-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.result-save-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 0 4px;
-  gap: 12px;
-}
-
-.result-save-label {
-  font-size: 13px;
-  color: var(--fg-soft);
-}
 
 @media (max-width: 768px) {
   .gen-grid {
