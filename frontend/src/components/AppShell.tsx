@@ -19,7 +19,8 @@ function ShellContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    setSidebarOpen(false);
+    const id = setTimeout(() => setSidebarOpen(false), 0);
+    return () => clearTimeout(id);
   }, [location.pathname]);
 
   const projectMatch = useMatch('/projects/:projectId/*');
