@@ -8,6 +8,8 @@ import './Generator.css';
 
 type Network = 'instagram' | 'x' | 'linkedin' | 'facebook';
 type Tone = 'formal' | 'casual' | 'humoristico' | 'inspiracional';
+type View = 'preview' | 'raw';
+type GeneratingStage = 'copy' | 'image' | 'both' | null;
 
 const NETWORKS: { id: Network; label: string; maxChars: number; softLimit: number; hashtags: number; aspect: string }[] = [
   { id: 'instagram', label: 'Instagram', maxChars: 2200, softLimit: 1500, hashtags: 8, aspect: '1:1' },
@@ -33,11 +35,13 @@ export default function Generator() {
   const [network, setNetwork] = useState<Network>('instagram');
   const [tone, setTone] = useState<Tone>('casual');
   const [description, setDescription] = useState('');
-  const [generating, setGenerating] = useState(false);
+  const [generatingStage, setGeneratingStage] = useState<GeneratingStage>(null);
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [project, setProject] = useState<Project | null>(null);
+  const [view, setView] = useState<View>('preview');
+  const [adjustText, setAdjustText] = useState('');
 
   useEffect(() => {
     if (!numericId) return;
@@ -45,19 +49,90 @@ export default function Generator() {
   }, [numericId, getToken]);
 
   const activeNetwork = NETWORKS.find((n) => n.id === network)!;
+  const activeVariant = result?.networks[network];
+
+  const fullText = activeVariant
+    ? activeVariant.hashtags.length > 0
+      ? `${activeVariant.copy}\n\n${activeVariant.hashtags.join(' ')}`
+      : activeVariant.copy
+    : '';
+  const charCount = fullText.length;
+  const lenPct = Math.min(100, (charCount / activeNetwork.maxChars) * 100);
+  const lenState =
+    charCount > activeNetwork.maxChars ? 'over' :
+    charCount > activeNetwork.softLimit ? 'warn' : '';
+  const wordCount = activeVariant ? activeVariant.copy.split(/\s+/).filter(Boolean).length : 0;
 
   const handleGenerate = async () => {
     if (!description.trim()) return;
-    setGenerating(true);
-    setError('');
+    setGeneratingStage('both');
     setResult(null);
+    setError('');
     try {
       const data = await postsApi.generate(numericId, { description, tone }, getToken);
       setResult(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al generar.');
     } finally {
-      setGenerating(false);
+      setGeneratingStage(null);
+    }
+  };
+
+  const handleRegenerateAll = async () => {
+    if (!description.trim()) return;
+    setGeneratingStage('both');
+    setError('');
+    try {
+      const data = await postsApi.generate(numericId, { description, tone }, getToken);
+      setResult(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al regenerar.');
+    } finally {
+      setGeneratingStage(null);
+    }
+  };
+
+  const handleRegenerateCopy = async () => {
+    if (!description.trim()) return;
+    setGeneratingStage('copy');
+    setError('');
+    try {
+      const data = await postsApi.generateCopy(numericId, { description, tone }, getToken);
+      setResult((prev) => (prev ? { ...prev, networks: data.networks } : null));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al regenerar copy.');
+    } finally {
+      setGeneratingStage(null);
+    }
+  };
+
+  const handleRegenerateImage = async () => {
+    if (!description.trim()) return;
+    setGeneratingStage('image');
+    setError('');
+    try {
+      const data = await postsApi.generateImage(numericId, { description }, getToken);
+      setResult((prev) => (prev ? { ...prev, imageUrl: data.imageUrl } : null));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al regenerar imagen.');
+    } finally {
+      setGeneratingStage(null);
+    }
+  };
+
+  const handleApplyAdjust = async () => {
+    if (!adjustText.trim()) return;
+    setGeneratingStage('both');
+    setError('');
+    try {
+      const adjustedDescription = `${description}\n\n${adjustText}`;
+      const data = await postsApi.generate(numericId, { description: adjustedDescription, tone }, getToken);
+      setResult(data);
+      setAdjustText('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al aplicar ajuste.');
+    } finally {
+      setGeneratingStage(null);
     }
   };
 
@@ -86,7 +161,11 @@ export default function Generator() {
     }
   };
 
-  const activeVariant = result?.networks[network];
+  const statusLabel =
+    generatingStage === 'copy' ? 'Generando copy…' :
+    generatingStage === 'image' ? 'Generando imagen…' :
+    generatingStage === 'both' ? 'Generando copy + imagen…' :
+    'Listo';
 
   return (
     <>
@@ -154,34 +233,62 @@ export default function Generator() {
             <button
               className="btn btn-primary"
               onClick={handleGenerate}
-              disabled={generating || !description.trim()}
+              disabled={generatingStage !== null || !description.trim()}
             >
               <Sparkle size={14} />
-              {generating ? 'Generando…' : result ? 'Regenerar' : 'Generar'}
+              {result ? 'Regenerar' : 'Generar'}
             </button>
           </div>
+
+          {result && (
+            <button
+              className="btn btn-sm"
+              onClick={handleSave}
+              disabled={saving || generatingStage !== null}
+            >
+              {saving ? 'Guardando…' : `Guardar post de ${activeNetwork.label}`}
+            </button>
+          )}
         </aside>
 
         <section className="result-panel">
-          {generating ? (
+          {generatingStage !== null && !result ? (
             <div className="result-generating">
-              <span>Generando copy para las 4 redes + imagen…</span>
+              <span>{statusLabel}</span>
             </div>
-          ) : result ? (
-            <div className="result-with-preview">
-              <div className="result-save-bar">
-                <span className="result-save-label">
-                  Mostrando: <strong>{activeNetwork.label}</strong>
-                </span>
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={handleSave}
-                  disabled={saving}
-                >
-                  {saving ? 'Guardando…' : `Guardar post de ${activeNetwork.label}`}
-                </button>
+          ) : result && activeVariant ? (
+            <>
+              <div className="result-toolbar">
+                <div className="result-status">
+                  <span className={`dot${generatingStage ? ' gen' : ''}`} />
+                  {statusLabel}
+                </div>
+                <div className="seg" style={{ marginLeft: 12 }}>
+                  <button
+                    className={view === 'preview' ? 'active' : ''}
+                    onClick={() => setView('preview')}
+                  >
+                    Preview
+                  </button>
+                  <button
+                    className={view === 'raw' ? 'active' : ''}
+                    onClick={() => setView('raw')}
+                  >
+                    Raw
+                  </button>
+                </div>
+                <div className="toolbar-right">
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={handleRegenerateAll}
+                    disabled={generatingStage !== null}
+                  >
+                    Regenerar todo
+                  </button>
+                </div>
               </div>
-              {activeVariant && (
+
+              {view === 'preview' && (
                 <SocialPreview
                   network={network}
                   copy={activeVariant.copy}
@@ -190,7 +297,97 @@ export default function Generator() {
                   projectName={project?.name ?? 'Tu marca'}
                 />
               )}
-            </div>
+
+              {view === 'raw' && (
+                  <div className="result-stage">
+                    <div className="result-card">
+                      <div className="result-card-head">
+                        <span>Copy</span>
+                        <span className="mono">{charCount} / {activeNetwork.maxChars}</span>
+                      </div>
+                      <div className="result-card-body">
+                        <p className="copy-text">{activeVariant.copy}</p>
+                        {activeVariant.hashtags.length > 0 && (
+                          <div className="hashtag-chips">
+                            {activeVariant.hashtags.map((tag, i) => (
+                              <span key={i} className="chip">{tag}</span>
+                            ))}
+                          </div>
+                        )}
+                        <div className={`length-bar ${lenState}`}>
+                          <span style={{ width: `${lenPct}%` }} />
+                        </div>
+                        <div className="copy-meta">
+                          <span>{activeVariant.hashtags.length} tags</span>
+                          <span>{wordCount} palabras</span>
+                        </div>
+                      </div>
+                      <div className="result-card-actions">
+                        <button
+                          className="btn btn-sm"
+                          onClick={handleRegenerateCopy}
+                          disabled={generatingStage !== null}
+                        >
+                          Regenerar copy
+                        </button>
+                        <button
+                          className="btn btn-sm btn-ghost"
+                          onClick={() => navigator.clipboard.writeText(fullText)}
+                        >
+                          Copiar
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="result-card">
+                      <div className="result-card-head">
+                        <span>Imagen</span>
+                        <span className="mono">{activeNetwork.aspect}</span>
+                      </div>
+                      <div className="result-card-body no-pad">
+                        {result.imageUrl && (
+                          <div className="image-stage">
+                            <img src={result.imageUrl} alt="" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="result-card-actions">
+                        <button
+                          className="btn btn-sm"
+                          onClick={handleRegenerateImage}
+                          disabled={generatingStage !== null}
+                        >
+                          Regenerar imagen
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+              )}
+
+              <div className="adjust-bar">
+                <span className="adjust-pre">/ajustar</span>
+                <input
+                  value={adjustText}
+                  onChange={(e) => setAdjustText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleApplyAdjust(); }}
+                  placeholder="ej: hacé el copy más corto, agregá 2 emojis sutiles, imagen más cálida…"
+                />
+                <button
+                  className="btn btn-sm btn-primary"
+                  onClick={handleApplyAdjust}
+                  disabled={!adjustText.trim() || generatingStage !== null}
+                >
+                  Aplicar
+                </button>
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={() => setAdjustText('')}
+                  aria-label="Limpiar ajuste"
+                >
+                  ×
+                </button>
+              </div>
+            </>
           ) : (
             <div className="result-empty">
               <p>Completá el brief y hacé clic en <strong>Generar</strong>.</p>

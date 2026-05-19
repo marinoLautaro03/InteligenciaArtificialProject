@@ -284,7 +284,7 @@
   border-color: var(--accent);
 }
 
-.btn-primary {
+.clerk-card .btn-primary {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -299,16 +299,16 @@
   transition: opacity 0.15s;
 }
 
-.btn-primary:hover {
+.clerk-card .btn-primary:hover {
   opacity: 0.85;
 }
 
-.btn-primary:disabled {
+.clerk-card .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.btn-secondary {
+.clerk-card .btn-secondary {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -324,12 +324,12 @@
   transition: background 0.15s, border-color 0.15s;
 }
 
-.btn-secondary:hover:not(:disabled) {
+.clerk-card .btn-secondary:hover:not(:disabled) {
   background: var(--surface-2);
   border-color: var(--fg-soft);
 }
 
-.btn-secondary:disabled {
+.clerk-card .btn-secondary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

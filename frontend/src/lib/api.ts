@@ -88,6 +88,18 @@ export type GenerationResult = {
   };
 };
 
+export type GenerateCopyResult = {
+  networks: GenerationResult['networks'];
+};
+
+export type GenerateImageResult = {
+  imageUrl: string;
+};
+
+export type GenerateImageInput = {
+  description: string;
+};
+
 export type GeneratePostInput = {
   description: string;
   tone: 'formal' | 'casual' | 'humoristico' | 'inspiracional';
@@ -107,6 +119,18 @@ export const postsApi = {
 
   generate: (projectId: number, input: GeneratePostInput, getToken: () => Promise<string | null>) =>
     request<GenerationResult>(`/projects/${projectId}/posts/generate`, getToken, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+
+  generateCopy: (projectId: number, input: GeneratePostInput, getToken: () => Promise<string | null>) =>
+    request<GenerateCopyResult>(`/projects/${projectId}/posts/generate-copy`, getToken, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+
+  generateImage: (projectId: number, input: GenerateImageInput, getToken: () => Promise<string | null>) =>
+    request<GenerateImageResult>(`/projects/${projectId}/posts/generate-image`, getToken, {
       method: 'POST',
       body: JSON.stringify(input),
     }),
