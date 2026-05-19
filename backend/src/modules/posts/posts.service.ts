@@ -1,6 +1,6 @@
 import type { AllNetworkCopies, AiService } from "./ai.js";
 import type { PostsRepository } from "./posts.repository.js";
-import type { GeneratePostInput, SavePostInput } from "./posts.schemas.js";
+import type { GeneratePostInput, GenerateImageInput, SavePostInput } from "./posts.schemas.js";
 
 export type GenerationResult = {
   imageUrl: string;
@@ -36,6 +36,32 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
     ]);
 
     return { imageUrl, networks };
+  },
+
+  generateCopies: async (
+    project: { id: number; name: string; description: string; primaryColor: string | null },
+    _ownerId: string,
+    input: GeneratePostInput,
+  ): Promise<AllNetworkCopies> => {
+    return ai.generateAllCopies({
+      projectName: project.name,
+      projectDescription: project.description,
+      primaryColor: project.primaryColor,
+      userDescription: input.description,
+      tone: input.tone,
+    });
+  },
+
+  generateImage: async (
+    project: { id: number; name: string; description: string },
+    _ownerId: string,
+    input: GenerateImageInput,
+  ): Promise<{ imageUrl: string }> => {
+    const imageUrl = await ai.generatePostImage({
+      projectName: project.name,
+      userDescription: input.description,
+    });
+    return { imageUrl };
   },
 
   savePost: async (

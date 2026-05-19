@@ -3,6 +3,7 @@ import type { Authenticator } from "../../auth/auth.js";
 import type { ProjectsService } from "../projects/projects.service.js";
 import {
   generatePostSchema,
+  generateImageSchema,
   savePostSchema,
   postIdParamsSchema,
   postsQuerySchema,
@@ -61,6 +62,46 @@ export const createPostsController = (
       result.data,
     );
     return c.json(generation, 200);
+  });
+
+  controller.post("/:projectId/posts/generate-copy", async (c) => {
+    const user = await authenticate(c);
+    const params = projectIdParamsSchema.safeParse(c.req.param());
+    if (!params.success) return c.json({ error: "Invalid project id", issues: params.error.issues }, 400);
+
+    const body = await c.req.json().catch(() => undefined);
+    const result = generatePostSchema.safeParse(body);
+    if (!result.success) return c.json({ error: "Invalid request body", issues: result.error.issues }, 400);
+
+    const project = await projectsService.findByIdForOwner(params.data.projectId, user.userId);
+    if (!project) return c.json({ error: "Project not found" }, 404);
+
+    const networks = await postsService.generateCopies(
+      { id: project.id, name: project.name, description: project.description, primaryColor: project.primaryColor },
+      user.userId,
+      result.data,
+    );
+    return c.json({ networks }, 200);
+  });
+
+  controller.post("/:projectId/posts/generate-image", async (c) => {
+    const user = await authenticate(c);
+    const params = projectIdParamsSchema.safeParse(c.req.param());
+    if (!params.success) return c.json({ error: "Invalid project id", issues: params.error.issues }, 400);
+
+    const body = await c.req.json().catch(() => undefined);
+    const result = generateImageSchema.safeParse(body);
+    if (!result.success) return c.json({ error: "Invalid request body", issues: result.error.issues }, 400);
+
+    const project = await projectsService.findByIdForOwner(params.data.projectId, user.userId);
+    if (!project) return c.json({ error: "Project not found" }, 404);
+
+    const imageResult = await postsService.generateImage(
+      { id: project.id, name: project.name, description: project.description },
+      user.userId,
+      result.data,
+    );
+    return c.json(imageResult, 200);
   });
 
   controller.post("/:projectId/posts/save", async (c) => {

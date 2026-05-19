@@ -563,4 +563,93 @@ describe("posts module e2e", () => {
       expect(owner2List.body).toEqual([]);
     });
   });
+
+  describe("generate-copy endpoint", () => {
+    it("returns networks with copy for all 4 networks, no imageUrl", async () => {
+      const project = await createProject();
+
+      const response = await request(server)
+        .post(`/projects/${project.id}/posts/generate-copy`)
+        .set("Authorization", "Bearer test-token")
+        .send({ description: "Winter blend launch", tone: "casual" })
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        networks: {
+          instagram: { copy: expect.any(String), hashtags: expect.any(Array) },
+          x:         { copy: expect.any(String), hashtags: expect.any(Array) },
+          linkedin:  { copy: expect.any(String), hashtags: expect.any(Array) },
+          facebook:  { copy: expect.any(String), hashtags: expect.any(Array) },
+        },
+      });
+      expect(response.body.imageUrl).toBeUndefined();
+    });
+
+    it("requires description", async () => {
+      const project = await createProject();
+
+      await request(server)
+        .post(`/projects/${project.id}/posts/generate-copy`)
+        .set("Authorization", "Bearer test-token")
+        .send({ description: "" })
+        .expect(400);
+    });
+
+    it("requires auth", async () => {
+      await request(server)
+        .post("/projects/1/posts/generate-copy")
+        .send({ description: "test" })
+        .expect(401);
+    });
+
+    it("returns 404 when project not found", async () => {
+      await request(server)
+        .post("/projects/9999/posts/generate-copy")
+        .set("Authorization", "Bearer test-token")
+        .send({ description: "test" })
+        .expect(404);
+    });
+  });
+
+  describe("generate-image endpoint", () => {
+    it("returns imageUrl only, no networks", async () => {
+      const project = await createProject();
+
+      const response = await request(server)
+        .post(`/projects/${project.id}/posts/generate-image`)
+        .set("Authorization", "Bearer test-token")
+        .send({ description: "Winter blend launch" })
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        imageUrl: expect.any(String),
+      });
+      expect(response.body.networks).toBeUndefined();
+    });
+
+    it("requires description", async () => {
+      const project = await createProject();
+
+      await request(server)
+        .post(`/projects/${project.id}/posts/generate-image`)
+        .set("Authorization", "Bearer test-token")
+        .send({ description: "" })
+        .expect(400);
+    });
+
+    it("requires auth", async () => {
+      await request(server)
+        .post("/projects/1/posts/generate-image")
+        .send({ description: "test" })
+        .expect(401);
+    });
+
+    it("returns 404 when project not found", async () => {
+      await request(server)
+        .post("/projects/9999/posts/generate-image")
+        .set("Authorization", "Bearer test-token")
+        .send({ description: "test" })
+        .expect(404);
+    });
+  });
 });
