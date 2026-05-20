@@ -19,6 +19,8 @@ export type AiService = {
   generatePostImage: (input: {
     projectName: string;
     userDescription: string;
+    width: number;
+    height: number;
   }) => Promise<string>;
 };
 
@@ -32,10 +34,20 @@ type AiConfig = {
 };
 
 const toneHints: Record<"formal" | "casual" | "humoristico" | "inspiracional", string> = {
-  formal: "profesional y directo",
-  casual: "cercano y conversacional",
-  humoristico: "ligero, con humor y chispa",
-  inspiracional: "motivador y emotivo",
+  formal:
+    "Tono FORMAL: escribí de manera profesional, clara y directa. Sin emojis, sin coloquialismos. " +
+    "Oraciones completas, vocabulario preciso. El lector debe sentir autoridad y confianza.",
+  casual:
+    "Tono CASUAL: escribí como si le hablaras a un amigo. Usá contracciones, tuteo, lenguaje cotidiano. " +
+    "Podés usar algún emoji puntual. Cercano, cálido, sin sonar corporativo.",
+  humoristico:
+    "Tono HUMORÍSTICO: el copy DEBE hacer sonreír o sorprender. Usá juegos de palabras, ironía suave, " +
+    "referencias inesperadas o giros cómicos. Los emojis deben reforzar el chiste, no ser decoración. " +
+    "Si el copy no tiene al menos un momento gracioso, no sirve.",
+  inspiracional:
+    "Tono INSPIRACIONAL: escribí para motivar y emocionar. Usá frases con impacto, verbos de acción, " +
+    "imágenes mentales poderosas. El lector debe terminar de leer con ganas de hacer algo. " +
+    "Evitá los clichés vacíos — cada frase tiene que sentirse genuina.",
 };
 
 const FALLBACK_COPIES: AllNetworkCopies = {
@@ -89,8 +101,10 @@ export const createAiService = (config: AiConfig): AiService => {
         `Sos un community manager experto generando contenido para "${input.projectName}".`,
         `Descripción del proyecto: "${input.projectDescription}"`,
         input.primaryColor ? `Color primario: ${input.primaryColor}` : null,
+        "",
+        toneHints[input.tone] ?? input.tone,
+        "",
         `Brief: "${input.userDescription}"`,
-        `Tono: ${toneHints[input.tone] ?? input.tone}`,
         "",
         "Generá copy para las 4 redes sociales. Respondé ÚNICAMENTE con JSON válido, sin explicaciones ni markdown:",
         `{`,
@@ -171,6 +185,7 @@ export const createAiService = (config: AiConfig): AiService => {
       const prompt = [
         `Social media image for project "${input.projectName}": ${input.userDescription}`,
         "Minimalist, clean design, suitable for social media.",
+        "No text, letters, words, or typography of any kind unless explicitly requested by the user.",
       ].join(". ");
 
       const response = await fetch(url, {
@@ -182,8 +197,8 @@ export const createAiService = (config: AiConfig): AiService => {
         body: JSON.stringify({
           prompt,
           model: config.imageModel,
-          width: 1024,
-          height: 1024,
+          width: input.width,
+          height: input.height,
         }),
       });
 

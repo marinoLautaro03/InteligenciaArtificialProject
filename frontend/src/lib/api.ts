@@ -96,13 +96,17 @@ export type GenerateImageResult = {
   imageUrl: string;
 };
 
+export type SocialMedia = 'instagram' | 'x' | 'facebook' | 'linkedin';
+
 export type GenerateImageInput = {
   description: string;
+  socialMedia: SocialMedia;
 };
 
 export type GeneratePostInput = {
   description: string;
   tone: 'formal' | 'casual' | 'humoristico' | 'inspiracional';
+  socialMedia: SocialMedia;
 };
 
 export type SavePostInput = {

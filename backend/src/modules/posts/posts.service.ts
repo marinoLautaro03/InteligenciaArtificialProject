@@ -2,6 +2,13 @@ import type { AllNetworkCopies, AiService } from "./ai.js";
 import type { PostsRepository } from "./posts.repository.js";
 import type { GeneratePostInput, GenerateImageInput, SavePostInput } from "./posts.schemas.js";
 
+const IMAGE_DIMENSIONS: Record<string, { width: number; height: number }> = {
+  instagram: { width: 864, height: 1080 },
+  x:         { width: 1280, height: 720  },
+  linkedin:  { width: 1024, height: 536  },
+  facebook:  { width: 1024, height: 536  },
+};
+
 export type GenerationResult = {
   imageUrl: string;
   networks: AllNetworkCopies;
@@ -32,6 +39,7 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
       ai.generatePostImage({
         projectName: project.name,
         userDescription: input.description,
+        ...IMAGE_DIMENSIONS[input.socialMedia],
       }),
     ]);
 
@@ -60,6 +68,7 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
     const imageUrl = await ai.generatePostImage({
       projectName: project.name,
       userDescription: input.description,
+      ...IMAGE_DIMENSIONS[input.socialMedia],
     });
     return { imageUrl };
   },

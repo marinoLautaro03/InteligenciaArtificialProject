@@ -5,6 +5,7 @@ export const socialMediaEnum = z.enum(["instagram", "x", "facebook", "linkedin"]
 export const generatePostSchema = z.object({
   description: z.string().trim().min(1),
   tone: z.enum(["formal", "casual", "humoristico", "inspiracional"]).default("casual"),
+  socialMedia: socialMediaEnum.default("instagram"),
 });
 
 export type GeneratePostInput = z.infer<typeof generatePostSchema>;
@@ -50,6 +51,7 @@ export type UpdatePostInput = z.infer<typeof updatePostSchema>;
 
 export const generateImageSchema = z.object({
   description: z.string().trim().min(1),
+  socialMedia: socialMediaEnum.default("instagram"),
 });
 
 export type GenerateImageInput = z.infer<typeof generateImageSchema>;
