@@ -185,6 +185,7 @@ export const createAiService = (config: AiConfig): AiService => {
       const prompt = [
         `Social media image for project "${input.projectName}": ${input.userDescription}`,
         "Minimalist, clean design, suitable for social media.",
+        "No text, letters, words, or typography of any kind unless explicitly requested by the user.",
       ].join(". ");
 
       const response = await fetch(url, {
