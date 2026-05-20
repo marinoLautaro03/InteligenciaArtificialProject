@@ -37,6 +37,7 @@ export default function App() {
         <Route index element={<Dashboard />} />
         <Route path="/projects/:projectId/gallery" element={<ProjectGallery />} />
         <Route path="/projects/:projectId/generator" element={<Generator />} />
+        <Route path="/projects/:projectId/posts/:postId/edit" element={<Generator />} />
       </Route>
     </Routes>
   );
