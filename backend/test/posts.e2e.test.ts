@@ -521,6 +521,83 @@ describe("posts module e2e", () => {
         .send({ text: "" })
         .expect(400);
     });
+
+    it("updates imageUrl and generationPrompt alongside text", async () => {
+      const project = await createProject();
+
+      const saved = await request(server)
+        .post(`/projects/${project.id}/posts/save`)
+        .set("Authorization", "Bearer test-token")
+        .send({
+          socialMedia: "instagram",
+          text: "Original text",
+          hashtags: [],
+          imageUrl: "data:image/png;base64,abc",
+          generationPrompt: "Original prompt",
+        })
+        .expect(201);
+
+      const updated = await request(server)
+        .patch(`/projects/${project.id}/posts/${saved.body.id}`)
+        .set("Authorization", "Bearer test-token")
+        .send({
+          text: "Updated text",
+          imageUrl: "data:image/png;base64,newimage",
+          generationPrompt: "Updated prompt",
+        })
+        .expect(200);
+
+      expect(updated.body.text).toBe("Updated text");
+      expect(updated.body.imageUrl).toBe("data:image/png;base64,newimage");
+      expect(updated.body.generationPrompt).toBe("Updated prompt");
+    });
+
+    it("allows partial update with imageUrl only", async () => {
+      const project = await createProject();
+
+      const saved = await request(server)
+        .post(`/projects/${project.id}/posts/save`)
+        .set("Authorization", "Bearer test-token")
+        .send({
+          socialMedia: "instagram",
+          text: "Original text",
+          hashtags: [],
+          imageUrl: "data:image/png;base64,abc",
+          generationPrompt: "Original prompt",
+        })
+        .expect(201);
+
+      const updated = await request(server)
+        .patch(`/projects/${project.id}/posts/${saved.body.id}`)
+        .set("Authorization", "Bearer test-token")
+        .send({ imageUrl: "data:image/png;base64,newimage" })
+        .expect(200);
+
+      expect(updated.body.imageUrl).toBe("data:image/png;base64,newimage");
+      expect(updated.body.text).toBe(saved.body.text);
+    });
+
+    it("rejects an empty body (no fields provided)", async () => {
+      const project = await createProject();
+
+      const saved = await request(server)
+        .post(`/projects/${project.id}/posts/save`)
+        .set("Authorization", "Bearer test-token")
+        .send({
+          socialMedia: "instagram",
+          text: "Post",
+          hashtags: [],
+          imageUrl: "data:image/png;base64,abc",
+          generationPrompt: "Post",
+        })
+        .expect(201);
+
+      await request(server)
+        .patch(`/projects/${project.id}/posts/${saved.body.id}`)
+        .set("Authorization", "Bearer test-token")
+        .send({})
+        .expect(400);
+    });
   });
 
   describe("owner isolation", () => {

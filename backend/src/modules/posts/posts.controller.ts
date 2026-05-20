@@ -145,7 +145,7 @@ export const createPostsController = (
     const result = updatePostSchema.safeParse(body);
     if (!result.success) return c.json({ error: "Invalid request body", issues: result.error.issues }, 400);
 
-    const post = await postsService.updatePostText(params.data.id, params.data.projectId, user.userId, result.data.text);
+    const post = await postsService.updatePost(params.data.id, params.data.projectId, user.userId, result.data);
     if (!post) return c.json({ error: "Post not found" }, 404);
 
     return c.json(post);
