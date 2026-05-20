@@ -2,7 +2,15 @@ import { useAuth } from '@clerk/react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { postsApi, projectsApi, type Post, type Project } from '../lib/api';
+import { Instagram, XSocial, LinkedIn, Facebook } from '../components/Icons';
 import './ProjectGallery.css';
+
+const NETWORK_ICONS: Record<string, React.ReactNode> = {
+  instagram: <Instagram size={13} />,
+  x:         <XSocial size={13} />,
+  linkedin:  <LinkedIn size={13} />,
+  facebook:  <Facebook size={13} />,
+};
 
 const socialNames: Record<string, string> = {
   instagram: 'Instagram',
@@ -118,12 +126,18 @@ export default function ProjectGallery() {
             >
               <img src={post.imageUrl} alt="" />
               <div className="gallery-card-body">
-                <span
-                  className="gallery-card-network"
-                  style={{ color: socialColors[post.socialMedia] }}
-                >
-                  {socialNames[post.socialMedia]}
-                </span>
+                <div className="gallery-card-meta">
+                  <span
+                    className="gallery-card-network"
+                    style={{ color: socialColors[post.socialMedia] }}
+                  >
+                    {NETWORK_ICONS[post.socialMedia]}
+                    {socialNames[post.socialMedia]}
+                  </span>
+                  <span className="gallery-card-date">
+                    {new Date(post.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                  </span>
+                </div>
                 <p className="gallery-card-text">{post.text}</p>
               </div>
               <div className="gallery-card-actions">

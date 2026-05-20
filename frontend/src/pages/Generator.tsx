@@ -3,7 +3,14 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { postsApi, projectsApi, type GenerationResult, type Project } from '../lib/api';
 import SocialPreview from '../components/SocialPreview';
-import { Sparkle } from '../components/Icons';
+import { Sparkle, Instagram, XSocial, LinkedIn, Facebook } from '../components/Icons';
+
+const NETWORK_ICONS: Record<string, React.ReactNode> = {
+  instagram: <Instagram size={18} />,
+  x:         <XSocial size={18} />,
+  linkedin:  <LinkedIn size={18} />,
+  facebook:  <Facebook size={18} />,
+};
 import './Generator.css';
 
 type Network = 'instagram' | 'x' | 'linkedin' | 'facebook';
@@ -12,7 +19,7 @@ type View = 'preview' | 'raw';
 type GeneratingStage = 'copy' | 'image' | 'both' | null;
 
 const NETWORKS: { id: Network; label: string; maxChars: number; softLimit: number; hashtags: number; aspect: string }[] = [
-  { id: 'instagram', label: 'Instagram', maxChars: 2200, softLimit: 1500, hashtags: 8, aspect: '1:1' },
+  { id: 'instagram', label: 'Instagram', maxChars: 2200, softLimit: 1500, hashtags: 8, aspect: '4:5' },
   { id: 'x', label: 'X', maxChars: 280, softLimit: 240, hashtags: 2, aspect: '16:9' },
   { id: 'linkedin', label: 'LinkedIn', maxChars: 3000, softLimit: 1300, hashtags: 4, aspect: '1.91:1' },
   { id: 'facebook', label: 'Facebook', maxChars: 63206, softLimit: 400, hashtags: 2, aspect: '1.91:1' },
@@ -87,7 +94,7 @@ export default function Generator() {
     setResult(null);
     setError('');
     try {
-      const data = await postsApi.generate(numericId, { description, tone }, getToken);
+      const data = await postsApi.generate(numericId, { description, tone, socialMedia: network }, getToken);
       setResult(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al generar.');
@@ -101,7 +108,7 @@ export default function Generator() {
     setGeneratingStage('both');
     setError('');
     try {
-      const data = await postsApi.generate(numericId, { description, tone }, getToken);
+      const data = await postsApi.generate(numericId, { description, tone, socialMedia: network }, getToken);
       setResult(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al regenerar.');
@@ -115,7 +122,7 @@ export default function Generator() {
     setGeneratingStage('copy');
     setError('');
     try {
-      const data = await postsApi.generateCopy(numericId, { description, tone }, getToken);
+      const data = await postsApi.generateCopy(numericId, { description, tone, socialMedia: network }, getToken);
       setResult((prev) => (prev ? { ...prev, networks: data.networks } : null));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al regenerar copy.');
@@ -129,7 +136,7 @@ export default function Generator() {
     setGeneratingStage('image');
     setError('');
     try {
-      const data = await postsApi.generateImage(numericId, { description }, getToken);
+      const data = await postsApi.generateImage(numericId, { description, socialMedia: network }, getToken);
       setResult((prev) => (prev ? { ...prev, imageUrl: data.imageUrl } : null));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al regenerar imagen.');
@@ -144,7 +151,7 @@ export default function Generator() {
     setError('');
     try {
       const adjustedDescription = `${description}\n\n${adjustText}`;
-      const data = await postsApi.generate(numericId, { description: adjustedDescription, tone }, getToken);
+      const data = await postsApi.generate(numericId, { description: adjustedDescription, tone, socialMedia: network }, getToken);
       setResult(data);
       setAdjustText('');
     } catch (err) {
@@ -222,12 +229,13 @@ export default function Generator() {
                 className={`network-btn${network === n.id ? ' active' : ''}`}
                 onClick={() => setNetwork(n.id)}
               >
+                {NETWORK_ICONS[n.id]}
                 {n.label}
               </button>
             ))}
           </div>
           <div className="network-meta">
-            <div><span>Largo</span><span className="v">{activeNetwork.softLimit}/{activeNetwork.maxChars}</span></div>
+            <div><span>Longitud</span><span className="v">{activeNetwork.softLimit}/{activeNetwork.maxChars}</span></div>
             <div><span>#tags</span><span className="v">{activeNetwork.hashtags} ideal</span></div>
             <div><span>Imagen</span><span className="v">{activeNetwork.aspect}</span></div>
           </div>

@@ -104,7 +104,16 @@
   gap: 8px;
 }
 
+.gallery-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .gallery-card-network {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.08em;
@@ -112,11 +121,21 @@
   font-weight: 600;
 }
 
+.gallery-card-date {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-muted);
+}
+
 .gallery-card-text {
   font-size: 13px;
   line-height: 1.4;
   color: var(--fg-muted);
   margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .generate-modal-actions {
