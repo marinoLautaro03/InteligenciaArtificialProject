@@ -90,10 +90,15 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
     return postsRepository.update(id, projectId, { approved: true });
   },
 
-  updatePostText: async (id: number, projectId: number, ownerId: string, text: string) => {
+  updatePost: async (
+    id: number,
+    projectId: number,
+    ownerId: string,
+    data: { text?: string; imageUrl?: string; generationPrompt?: string },
+  ) => {
     const post = await postsRepository.findByIdForProject(id, projectId, ownerId);
     if (!post) return undefined;
-    return postsRepository.update(id, projectId, { text });
+    return postsRepository.update(id, projectId, data);
   },
 
   deletePost: async (id: number, projectId: number, ownerId: string) => {

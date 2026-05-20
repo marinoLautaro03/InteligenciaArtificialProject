@@ -32,9 +32,19 @@ export const postsQuerySchema = z.object({
   includeUnapproved: z.coerce.boolean().optional(),
 });
 
-export const updatePostSchema = z.object({
-  text: z.string().trim().min(1),
-});
+export const updatePostSchema = z
+  .object({
+    text: z.string().trim().min(1).optional(),
+    imageUrl: z.string().min(1).optional(),
+    generationPrompt: z.string().optional(),
+  })
+  .refine(
+    (data) =>
+      data.text !== undefined ||
+      data.imageUrl !== undefined ||
+      data.generationPrompt !== undefined,
+    { message: "At least one field is required" },
+  );
 
 export type UpdatePostInput = z.infer<typeof updatePostSchema>;
 

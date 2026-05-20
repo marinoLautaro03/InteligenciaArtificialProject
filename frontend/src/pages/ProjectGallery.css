@@ -134,30 +134,6 @@
   background: var(--surface-2);
 }
 
-.gallery-card-edit-area {
-  width: 100%;
-  min-height: 80px;
-  resize: vertical;
-  font-family: var(--font-sans);
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--fg);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 8px 10px;
-}
-
-.gallery-card-edit-area:focus {
-  outline: none;
-  border-color: var(--fg);
-}
-
-.gallery-card-edit-area:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 @media (max-width: 768px) {
   .gallery-intro {
     grid-template-columns: 1fr;
