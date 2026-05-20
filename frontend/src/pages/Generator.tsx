@@ -157,9 +157,6 @@ export default function Generator() {
   const handleSave = async () => {
     if (!result) return;
     const variant = result.networks[network];
-    const fullText = variant.hashtags.length > 0
-      ? `${variant.copy}\n\n${variant.hashtags.join(' ')}`
-      : variant.copy;
     setSaving(true);
     setError('');
     try {
