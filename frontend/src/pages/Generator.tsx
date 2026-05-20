@@ -156,7 +156,6 @@ export default function Generator() {
 
   const handleSave = async () => {
     if (!result) return;
-    const variant = result.networks[network];
     setSaving(true);
     setError('');
     try {
@@ -168,6 +167,7 @@ export default function Generator() {
           getToken,
         );
       } else {
+        const variant = result.networks[network];
         await postsApi.save(
           numericId,
           {
