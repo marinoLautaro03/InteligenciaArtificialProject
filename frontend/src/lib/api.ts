@@ -117,6 +117,9 @@ export const postsApi = {
   list: (projectId: number, getToken: () => Promise<string | null>, options?: { includeUnapproved?: boolean }) =>
     request<Post[]>(`/projects/${projectId}/posts${options?.includeUnapproved ? '?includeUnapproved=true' : ''}`, getToken),
 
+  getById: (projectId: number, postId: number, getToken: () => Promise<string | null>) =>
+    request<Post>(`/projects/${projectId}/posts/${postId}`, getToken),
+
   generate: (projectId: number, input: GeneratePostInput, getToken: () => Promise<string | null>) =>
     request<GenerationResult>(`/projects/${projectId}/posts/generate`, getToken, {
       method: 'POST',
@@ -146,7 +149,12 @@ export const postsApi = {
       method: 'PATCH',
     }),
 
-  update: (projectId: number, postId: number, input: { text: string }, getToken: () => Promise<string | null>) =>
+  update: (
+    projectId: number,
+    postId: number,
+    input: { text?: string; imageUrl?: string; generationPrompt?: string },
+    getToken: () => Promise<string | null>,
+  ) =>
     request<Post>(`/projects/${projectId}/posts/${postId}`, getToken, {
       method: 'PATCH',
       body: JSON.stringify(input),
