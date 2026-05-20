@@ -476,7 +476,7 @@ describe("posts module e2e", () => {
     });
   });
 
-  describe("update post text", () => {
+  describe("update post", () => {
     it("updates the text of an existing post", async () => {
       const project = await createProject();
 
@@ -575,6 +575,7 @@ describe("posts module e2e", () => {
 
       expect(updated.body.imageUrl).toBe("data:image/png;base64,newimage");
       expect(updated.body.text).toBe(saved.body.text);
+      expect(updated.body.generationPrompt).toBe(saved.body.generationPrompt);
     });
 
     it("rejects an empty body (no fields provided)", async () => {
