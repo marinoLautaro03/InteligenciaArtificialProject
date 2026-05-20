@@ -26,11 +26,13 @@ const TONES: { id: Tone; name: string; hint: string }[] = [
 ];
 
 export default function Generator() {
-  const { projectId } = useParams();
+  const { projectId, postId } = useParams();
   const { getToken } = useAuth();
   const navigate = useNavigate();
 
   const numericId = Number(projectId);
+  const numericPostId = postId ? Number(postId) : undefined;
+  const isEditMode = Boolean(numericPostId);
 
   const [network, setNetwork] = useState<Network>('instagram');
   const [tone, setTone] = useState<Tone>('casual');
@@ -47,6 +49,22 @@ export default function Generator() {
     if (!numericId) return;
     projectsApi.getById(numericId, getToken).then(setProject).catch(() => {});
   }, [numericId, getToken]);
+
+  useEffect(() => {
+    if (!isEditMode || !numericPostId || !numericId) return;
+    postsApi.getById(numericId, numericPostId, getToken).then((post) => {
+      setNetwork(post.socialMedia);
+      setDescription(post.generationPrompt);
+      const networks: GenerationResult['networks'] = {
+        instagram: { copy: '', hashtags: [] },
+        x: { copy: '', hashtags: [] },
+        linkedin: { copy: '', hashtags: [] },
+        facebook: { copy: '', hashtags: [] },
+      };
+      networks[post.socialMedia] = { copy: post.text, hashtags: [] };
+      setResult({ imageUrl: post.imageUrl, networks });
+    }).catch(() => {});
+  }, [isEditMode, numericPostId, numericId, getToken]);
 
   const activeNetwork = NETWORKS.find((n) => n.id === network)!;
   const activeVariant = result?.networks[network];
@@ -139,20 +157,32 @@ export default function Generator() {
   const handleSave = async () => {
     if (!result) return;
     const variant = result.networks[network];
+    const fullText = variant.hashtags.length > 0
+      ? `${variant.copy}\n\n${variant.hashtags.join(' ')}`
+      : variant.copy;
     setSaving(true);
     setError('');
     try {
-      await postsApi.save(
-        numericId,
-        {
-          socialMedia: network,
-          text: variant.copy,
-          hashtags: variant.hashtags,
-          imageUrl: result.imageUrl,
-          generationPrompt: description,
-        },
-        getToken,
-      );
+      if (isEditMode && numericPostId) {
+        await postsApi.update(
+          numericId,
+          numericPostId,
+          { text: fullText, imageUrl: result.imageUrl, generationPrompt: description },
+          getToken,
+        );
+      } else {
+        await postsApi.save(
+          numericId,
+          {
+            socialMedia: network,
+            text: variant.copy,
+            hashtags: variant.hashtags,
+            imageUrl: result.imageUrl,
+            generationPrompt: description,
+          },
+          getToken,
+        );
+      }
       navigate(`/projects/${numericId}/gallery`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al guardar.');
@@ -171,11 +201,15 @@ export default function Generator() {
     <>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Generador de post</h1>
-          <p className="page-sub">Brief → copy + imagen para las 4 redes. Switcheá y guardá la que más te guste.</p>
+          <h1 className="page-title">{isEditMode ? 'Editar post' : 'Generador de post'}</h1>
+          <p className="page-sub">
+            {isEditMode
+              ? 'Regenerá copy o imagen y guardá los cambios.'
+              : 'Brief → copy + imagen para las 4 redes. Switcheá y guardá la que más te guste.'}
+          </p>
         </div>
         <Link to={`/projects/${numericId}/gallery`} className="btn btn-ghost btn-sm">
-          Ver galería
+          {isEditMode ? 'Volver a galería' : 'Ver galería'}
         </Link>
       </div>
 
@@ -246,7 +280,7 @@ export default function Generator() {
               onClick={handleSave}
               disabled={saving || generatingStage !== null}
             >
-              {saving ? 'Guardando…' : `Guardar post de ${activeNetwork.label}`}
+              {saving ? 'Guardando…' : isEditMode ? 'Guardar cambios' : `Guardar post de ${activeNetwork.label}`}
             </button>
           )}
         </aside>
