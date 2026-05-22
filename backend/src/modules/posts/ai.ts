@@ -51,42 +51,11 @@ const toneHints: Record<"formal" | "casual" | "humoristico" | "inspiracional", s
 };
 
 const FALLBACK_COPIES: AllNetworkCopies = {
-  instagram: { copy: "", hashtags: [] },
-  x: { copy: "", hashtags: [] },
-  linkedin: { copy: "", hashtags: [] },
-  facebook: { copy: "", hashtags: [] },
+  instagram: {copy: ".", hashtags: []},
+  x: {copy: ".", hashtags: []},
+  linkedin: {copy: ".", hashtags: []},
+  facebook: {copy: ".", hashtags: []},
 };
-
-function parseAllNetworkCopies(raw: string): AllNetworkCopies {
-  // Strip markdown code fences if the model wraps in ```json ... ```
-  const stripped = raw.replace(/^```[a-z]*\n?/m, "").replace(/\n?```$/m, "").trim();
-
-  // Find first { ... } block
-  const start = stripped.indexOf("{");
-  const end = stripped.lastIndexOf("}");
-  if (start === -1 || end === -1) return FALLBACK_COPIES;
-
-  try {
-    const parsed = JSON.parse(stripped.slice(start, end + 1)) as Record<string, unknown>;
-    const networks: (keyof AllNetworkCopies)[] = ["instagram", "x", "linkedin", "facebook"];
-
-    const result: AllNetworkCopies = { ...FALLBACK_COPIES };
-    for (const net of networks) {
-      const val = parsed[net];
-      if (val && typeof val === "object" && "copy" in val) {
-        result[net] = {
-          copy: String((val as Record<string, unknown>).copy ?? ""),
-          hashtags: Array.isArray((val as Record<string, unknown>).hashtags)
-            ? ((val as Record<string, unknown>).hashtags as unknown[]).map(String)
-            : [],
-        };
-      }
-    }
-    return result;
-  } catch {
-    return FALLBACK_COPIES;
-  }
-}
 
 export const createAiService = (config: AiConfig): AiService => {
   return {
@@ -97,47 +66,96 @@ export const createAiService = (config: AiConfig): AiService => {
         );
       }
 
-      const prompt = [
-        `Sos un community manager experto generando contenido para "${input.projectName}".`,
-        `Descripción del proyecto: "${input.projectDescription}"`,
-        input.primaryColor ? `Color primario: ${input.primaryColor}` : null,
-        "",
-        toneHints[input.tone] ?? input.tone,
-        "",
-        `Brief: "${input.userDescription}"`,
-        "",
-        "Generá copy para las 4 redes sociales. Respondé ÚNICAMENTE con JSON válido, sin explicaciones ni markdown:",
-        `{`,
-        `  "instagram": { "copy": "texto sin hashtags", "hashtags": ["#tag1", "#tag2"] },`,
-        `  "x":         { "copy": "texto sin hashtags", "hashtags": ["#tag1"] },`,
-        `  "linkedin":  { "copy": "texto sin hashtags", "hashtags": ["#tag1", "#tag2"] },`,
-        `  "facebook":  { "copy": "texto sin hashtags", "hashtags": ["#tag1"] }`,
-        `}`,
-        "",
-        "Reglas:",
-        "- Instagram: hasta 1500 caracteres, hasta 8 hashtags, creativo con emojis",
-        "- X: máximo 240 caracteres en total (copy + hashtags juntos), 2 hashtags",
-        "- LinkedIn: hasta 1300 caracteres, hasta 4 hashtags, tono profesional",
-        "- Facebook: hasta 400 caracteres, hasta 2 hashtags, conversacional",
-        "- Los hashtags van en el array, NO dentro del copy",
-      ]
-        .filter(Boolean)
-        .join("\n");
+      const prompt = `
+Sos un community manager experto generando contenido para "${input.projectName}".
+
+Descripción del proyecto:
+${input.projectDescription}
+
+${input.primaryColor ? `Color primario: ${input.primaryColor}` : ""}
+
+Tono:
+${toneHints[input.tone] ?? input.tone}
+
+Brief del usuario:
+${input.userDescription}
+
+Tu tarea:
+Generá copy para Instagram, X, LinkedIn y Facebook.
+
+IMPORTANTE:
+- Respondé ÚNICAMENTE con JSON válido.
+- No agregues explicaciones.
+- No agregues markdown.
+- No uses \`\`\`json.
+- No agregues texto antes ni después del JSON.
+- El resultado debe poder parsearse directamente con JSON.parse().
+- Todos los strings deben estar escapados correctamente.
+
+Formato EXACTO requerido:
+{
+  "instagram": {
+    "copy": "string",
+    "hashtags": ["#tag1", "#tag2"]
+  },
+  "x": {
+    "copy": "string",
+    "hashtags": ["#tag1", "#tag2"]
+  },
+  "linkedin": {
+    "copy": "string",
+    "hashtags": ["#tag1", "#tag2"]
+  },
+  "facebook": {
+    "copy": "string",
+    "hashtags": ["#tag1", "#tag2"]
+  }
+}
+
+Reglas:
+- Instagram:
+  - máximo 1500 caracteres
+  - hasta 8 hashtags
+  - creativo y visual
+  - se permiten emojis
+
+- X:
+  - máximo 240 caracteres TOTAL incluyendo hashtags
+  - máximo 2 hashtags
+  - directo e impactante
+
+- LinkedIn:
+  - máximo 1300 caracteres
+  - hasta 4 hashtags
+  - tono profesional
+
+- Facebook:
+  - máximo 400 caracteres
+  - hasta 2 hashtags
+  - tono conversacional
+
+- Los hashtags deben ir SOLO dentro del array "hashtags".
+- NO incluir hashtags dentro de "copy".
+- NO incluir saltos de línea innecesarios.
+- Si usás comillas dentro del copy, escapalas correctamente.
+`;
 
       const textRes = await fetch(`${config.textBaseUrl}/chat/completions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${config.textApiKey}`,
-          Accept: "text/event-stream",
         },
         body: JSON.stringify({
           model: config.textModel,
-          messages: [{ role: "user", content: prompt }],
+          messages: [{role: "user", content: prompt}],
           temperature: 0.3,
           top_p: 0.7,
-          max_tokens: 1024,
-          stream: true,
+          max_tokens: 5000,
+          stream: false,
+          response_format: {
+            type: "json_object",
+          }
         }),
       });
 
@@ -146,30 +164,16 @@ export const createAiService = (config: AiConfig): AiService => {
         throw new Error(`Text generation failed (${textRes.status}): ${body}`);
       }
 
-      let raw = "";
-      const reader = textRes.body!.getReader();
-      const decoder = new TextDecoder();
+      const data = await textRes.json();
+      console.log(JSON.stringify(data?.choices || {}, null, 2));
+      const raw = data.choices?.[0]?.message?.content;
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        for (const line of chunk.split("\n")) {
-          if (!line.startsWith("data: ")) continue;
-          const data = line.slice(6).trim();
-          if (data === "[DONE]") break;
-          try {
-            const parsed = JSON.parse(data) as {
-              choices: { delta: { content?: string } }[];
-            };
-            raw += parsed.choices[0]?.delta?.content ?? "";
-          } catch {
-            // skip malformed SSE lines
-          }
-        }
+      try {
+        return JSON.parse(raw) as AllNetworkCopies;
+      } catch (error) {
+        console.error("Failed to parse AI response:", error);
+        return FALLBACK_COPIES;
       }
-
-      return parseAllNetworkCopies(raw);
     },
 
     generatePostImage: async (input) => {
