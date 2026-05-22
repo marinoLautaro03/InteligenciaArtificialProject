@@ -25,6 +25,10 @@
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "tu-github-personal-access-token"
       }
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest"]
     }
-  }
+  },
 }
