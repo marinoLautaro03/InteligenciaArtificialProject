@@ -34,7 +34,24 @@ const toFormState = (project?: Project | null): FormState => {
 
 export default function ProjectForm({ initialValue, isSubmitting, onCancel, onSubmit }: ProjectFormProps) {
   const [form, setForm] = useState<FormState>(() => toFormState(initialValue));
+  const [logoPreview, setLogoPreview] = useState('');
   const [error, setError] = useState('');
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError('El archivo debe ser una imagen.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setForm((s) => ({ ...s, logoUrl: dataUrl }));
+      setLogoPreview(dataUrl);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const submitLabel = initialValue ? 'Guardar cambios' : 'Crear proyecto';
   const title = initialValue ? 'Editar proyecto' : 'Crear proyecto';
@@ -43,12 +60,15 @@ export default function ProjectForm({ initialValue, isSubmitting, onCancel, onSu
     event.preventDefault();
     setError('');
     try {
-      await onSubmit({
+      const input: CreateProjectInput = {
         name: form.name.trim(),
         description: form.description.trim(),
-        logoUrl: form.logoUrl.trim() || undefined,
         primaryColor: form.primaryColor.trim() || undefined,
-      });
+      };
+      if (!initialValue && form.logoUrl) {
+        input.logoUrl = form.logoUrl;
+      }
+      await onSubmit(input);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No pudimos guardar el proyecto.');
     }
@@ -98,16 +118,24 @@ export default function ProjectForm({ initialValue, isSubmitting, onCancel, onSu
           </label>
 
           <div className="project-form-grid">
-            <label className="project-field">
-              <span>Logo URL</span>
-              <input
-                className="input"
-                type="url"
-                value={form.logoUrl}
-                onChange={(e) => setForm((s) => ({ ...s, logoUrl: e.target.value }))}
-                placeholder="https://..."
-              />
-            </label>
+            {!initialValue ? (
+              <label className="project-field">
+                <span>Logo</span>
+                <input
+                  className="input"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoChange}
+                />
+                {logoPreview && (
+                  <img
+                    src={logoPreview}
+                    alt="Logo preview"
+                    style={{ width: 64, height: 64, objectFit: 'contain', borderRadius: 6, border: '1px solid var(--border)' }}
+                  />
+                )}
+              </label>
+            ) : null}
 
             <label className="project-field">
               <span>Color principal</span>

@@ -9,6 +9,7 @@ export type Post = InferSelectModel<typeof posts>;
 export type PostsRepository = {
   findAllByProject: (projectId: number, ownerId: string, options?: { includeUnapproved?: boolean }) => Promise<Post[]>;
   findByIdForProject: (id: number, projectId: number, ownerId: string) => Promise<Post | undefined>;
+  findById: (id: number) => Promise<Post | undefined>;
   create: (input: {
     projectId: number;
     imageUrl: string;
@@ -46,6 +47,14 @@ export const createPostsRepository = (database = db): PostsRepository => ({
       .where(and(eq(posts.id, id), eq(posts.projectId, projectId), eq(projects.ownerId, ownerId)));
 
     return result?.post;
+  },
+
+  findById: async (id) => {
+    const [result] = await database
+      .select()
+      .from(posts)
+      .where(eq(posts.id, id));
+    return result;
   },
 
   create: async (input) => {

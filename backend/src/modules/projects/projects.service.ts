@@ -8,6 +8,9 @@ export const createProjectsService = (projectsRepository: ProjectsRepository) =>
   findByIdForOwner: (id: number, ownerId: string) => {
     return projectsRepository.findByIdForOwner(id, ownerId);
   },
+  findById: (id: number) => {
+    return projectsRepository.findById(id);
+  },
   create: (ownerId: string, input: CreateProjectInput) => {
     return projectsRepository.create({
       ...input,

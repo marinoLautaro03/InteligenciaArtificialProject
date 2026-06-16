@@ -11,6 +11,7 @@ export type Project = DbProject & { postCount: number };
 export type ProjectsRepository = {
   findAllByOwner: (ownerId: string) => Promise<Project[]>;
   findByIdForOwner: (id: number, ownerId: string) => Promise<Project | undefined>;
+  findById: (id: number) => Promise<Project | undefined>;
   create: (input: CreateProjectInput & { ownerId: string }) => Promise<Project>;
   updateForOwner: (id: number, ownerId: string, input: UpdateProjectInput) => Promise<Project | undefined>;
   deleteForOwner: (id: number, ownerId: string) => Promise<boolean>;
@@ -31,6 +32,14 @@ export const createProjectsRepository = (database = db): ProjectsRepository => (
       .select({ ...getTableColumns(projects), postCount: postCountExpr })
       .from(projects)
       .where(and(eq(projects.id, id), eq(projects.ownerId, ownerId)));
+    return project;
+  },
+
+  findById: async (id) => {
+    const [project] = await database
+      .select({ ...getTableColumns(projects), postCount: postCountExpr })
+      .from(projects)
+      .where(eq(projects.id, id));
     return project;
   },
 

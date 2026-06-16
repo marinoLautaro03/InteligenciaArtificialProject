@@ -13,6 +13,7 @@ const envSchema = z.object({
   AI_IMAGE_MODEL: z.string().default("dall-e-3"),
   AI_IMAGE_BASE_URL: z.string().default(""),
   AI_IMAGE_API_KEY: z.string().default(""),
+  BACKEND_URL: z.string().default("http://localhost:3001"),
 });
 
 export const env = envSchema.parse(process.env);

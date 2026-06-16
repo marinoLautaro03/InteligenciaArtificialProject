@@ -57,7 +57,7 @@ export const createPostsController = (
     if (!project) return c.json({ error: "Project not found" }, 404);
 
     const generation = await postsService.generatePostVariants(
-      { id: project.id, name: project.name, description: project.description, primaryColor: project.primaryColor },
+      { id: project.id, name: project.name, description: project.description, primaryColor: project.primaryColor, logoUrl: project.logoUrl },
       user.userId,
       result.data,
     );
@@ -97,7 +97,7 @@ export const createPostsController = (
     if (!project) return c.json({ error: "Project not found" }, 404);
 
     const imageResult = await postsService.generateImage(
-      { id: project.id, name: project.name, description: project.description },
+      { id: project.id, name: project.name, description: project.description, logoUrl: project.logoUrl },
       user.userId,
       result.data,
     );
