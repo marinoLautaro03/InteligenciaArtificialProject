@@ -13,6 +13,7 @@ import { createPostsService } from "./modules/posts/posts.service.js";
 import { createProjectsController } from "./modules/projects/projects.controller.js";
 import { createProjectsRepository, type ProjectsRepository } from "./modules/projects/projects.repository.js";
 import { createProjectsService } from "./modules/projects/projects.service.js";
+import { createImagesController } from "./modules/images/images.controller.js";
 import { createUsersController } from "./modules/users/users.controller.js";
 import { createUsersRepository, type UsersRepository } from "./modules/users/users.repository.js";
 import { createUsersService } from "./modules/users/users.service.js";
@@ -63,6 +64,7 @@ export const createApp = (dependencies: AppDependencies = {}) => {
   );
 
   app.route("/health", createHealthController(healthService));
+  app.route("/images", createImagesController(projectsService, postsService));
   if (dependencies.authenticator) {
     app.route("/projects", createProjectsController(projectsService, dependencies.authenticator));
     app.route("/projects", createPostsController(postsService, projectsService, dependencies.authenticator));
