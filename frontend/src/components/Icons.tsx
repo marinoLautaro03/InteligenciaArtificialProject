@@ -127,3 +127,23 @@ export const ThumbsUp = (p: IconProps) => (
     <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
   </Icon>
 );
+
+export const Sun = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="8" cy="8" r="3" />
+    <line x1="8" y1="1" x2="8" y2="3" />
+    <line x1="8" y1="13" x2="8" y2="15" />
+    <line x1="1" y1="8" x2="3" y2="8" />
+    <line x1="13" y1="8" x2="15" y2="8" />
+    <line x1="3.05" y1="3.05" x2="4.46" y2="4.46" />
+    <line x1="11.54" y1="11.54" x2="12.95" y2="12.95" />
+    <line x1="12.95" y1="3.05" x2="11.54" y2="4.46" />
+    <line x1="4.46" y1="11.54" x2="3.05" y2="12.95" />
+  </Icon>
+);
+
+export const Moon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M14 8.55A6 6 0 1 1 7.45 2 4.67 4.67 0 0 0 14 8.55z" />
+  </Icon>
+);

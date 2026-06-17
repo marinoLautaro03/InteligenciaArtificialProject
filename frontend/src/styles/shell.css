@@ -166,6 +166,15 @@
   text-overflow: ellipsis;
 }
 
+.theme-toggle {
+  align-self: flex-end;
+  color: var(--fg-soft);
+}
+
+.theme-toggle:hover {
+  color: var(--fg);
+}
+
 /* Main column */
 .main {
   display: flex;

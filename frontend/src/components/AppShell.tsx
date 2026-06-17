@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useClerk, useUser } from '@clerk/react';
 import { Link, Outlet, useLocation, useMatch } from 'react-router-dom';
 import { ProjectsProvider, useProjects } from '../context/ProjectsContext';
+import { Sun, Moon } from './Icons';
 
 const initialsFromName = (name: string) =>
   name
@@ -17,11 +18,21 @@ function ShellContent() {
   const { projects } = useProjects();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [dark, setDark] = useState<boolean>(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
 
   useEffect(() => {
     const id = setTimeout(() => setSidebarOpen(false), 0);
     return () => clearTimeout(id);
   }, [location.pathname]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+  }, [dark]);
 
   const projectMatch = useMatch('/projects/:projectId/*');
   const activeProjectId = projectMatch?.params.projectId
@@ -87,6 +98,14 @@ function ShellContent() {
         )}
 
         <div className="spacer" />
+
+        <button
+          className="btn btn-ghost btn-icon theme-toggle"
+          onClick={() => setDark((d) => !d)}
+          title={dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+        >
+          {dark ? <Sun size={15} /> : <Moon size={15} />}
+        </button>
 
         <div className="user-card">
           <div className="user-avatar">{userInitials}</div>
