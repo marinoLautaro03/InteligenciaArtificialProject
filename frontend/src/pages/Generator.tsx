@@ -136,7 +136,7 @@ export default function Generator() {
     setGeneratingStage('image');
     setError('');
     try {
-      const data = await postsApi.generateImage(numericId, { description, socialMedia: network }, getToken);
+      const data = await postsApi.generateImage(numericId, { description, tone, socialMedia: network }, getToken);
       setResult((prev) => (prev ? { ...prev, imageUrl: data.imageUrl } : null));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al regenerar imagen.');
