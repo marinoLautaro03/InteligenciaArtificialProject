@@ -100,6 +100,7 @@ export type SocialMedia = 'instagram' | 'x' | 'facebook' | 'linkedin';
 
 export type GenerateImageInput = {
   description: string;
+  tone: 'formal' | 'casual' | 'humoristico' | 'inspiracional';
   socialMedia: SocialMedia;
 };
 

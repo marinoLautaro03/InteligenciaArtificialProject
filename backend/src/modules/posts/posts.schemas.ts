@@ -51,6 +51,7 @@ export type UpdatePostInput = z.infer<typeof updatePostSchema>;
 
 export const generateImageSchema = z.object({
   description: z.string().trim().min(1),
+  tone: z.enum(["formal", "casual", "humoristico", "inspiracional"]).default("casual"),
   socialMedia: socialMediaEnum.default("instagram"),
 });
 

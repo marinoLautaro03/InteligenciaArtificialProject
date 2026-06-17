@@ -31,7 +31,17 @@ export const buildImagePrompt = (input: ImagePromptInput): string => {
     "",
     `VISUAL TONE: ${input.tone}`,
     "",
-    "USER REQUEST:",
-    input.userDescription,
+    ...(input.originalBrief
+      ? [
+          "USER REQUEST (original):",
+          input.originalBrief,
+          "",
+          "EXPANDED BRIEF:",
+          input.userDescription,
+        ]
+      : [
+          "USER REQUEST:",
+          input.userDescription,
+        ]),
   ].join("\n");
 };

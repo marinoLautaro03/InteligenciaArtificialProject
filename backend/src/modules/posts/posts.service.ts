@@ -2,6 +2,11 @@ import type { AllNetworkCopies, AiService } from "./ai.js";
 import type { PostsRepository } from "./posts.repository.js";
 import type { GeneratePostInput, GenerateImageInput, SavePostInput } from "./posts.schemas.js";
 
+const BRIEF_ENRICH_THRESHOLD = 40;
+
+const countWords = (text: string): number =>
+  text.trim().split(/\s+/).filter(Boolean).length;
+
 const IMAGE_DIMENSIONS: Record<string, { width: number; height: number }> = {
   instagram: { width: 864, height: 1080 },
   x:         { width: 1280, height: 720  },
@@ -31,7 +36,9 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
     _ownerId: string,
     input: GeneratePostInput,
   ): Promise<GenerationResult> => {
-    const [networks, imageUrl] = await Promise.all([
+    const needsEnrich = countWords(input.description) < BRIEF_ENRICH_THRESHOLD;
+
+    const [networks, enrichedBrief] = await Promise.all([
       ai.generateAllCopies({
         projectName: project.name,
         projectDescription: project.description,
@@ -39,15 +46,25 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
         userDescription: input.description,
         tone: input.tone,
       }),
-      ai.generatePostImage({
-        projectName: project.name,
-        projectDescription: project.description,
-        primaryColor: project.primaryColor,
-        userDescription: input.description,
-        tone: input.tone,
-        ...IMAGE_DIMENSIONS[input.socialMedia],
-      }),
+      needsEnrich
+        ? ai.enrichBrief({
+            projectName: project.name,
+            projectDescription: project.description,
+            primaryColor: project.primaryColor,
+            userDescription: input.description,
+          })
+        : Promise.resolve(undefined),
     ]);
+
+    const imageUrl = await ai.generatePostImage({
+      projectName: project.name,
+      projectDescription: project.description,
+      primaryColor: project.primaryColor,
+      userDescription: enrichedBrief ?? input.description,
+      ...(enrichedBrief ? { originalBrief: input.description } : {}),
+      tone: input.tone,
+      ...IMAGE_DIMENSIONS[input.socialMedia],
+    });
 
     return { imageUrl, networks };
   },
@@ -71,12 +88,24 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
     _ownerId: string,
     input: GenerateImageInput,
   ): Promise<{ imageUrl: string }> => {
+    const needsEnrich = countWords(input.description) < BRIEF_ENRICH_THRESHOLD;
+
+    const enrichedBrief = needsEnrich
+      ? await ai.enrichBrief({
+          projectName: project.name,
+          projectDescription: project.description,
+          primaryColor: project.primaryColor,
+          userDescription: input.description,
+        })
+      : undefined;
+
     const imageUrl = await ai.generatePostImage({
       projectName: project.name,
       projectDescription: project.description,
       primaryColor: project.primaryColor,
-      userDescription: input.description,
-      tone: "casual",
+      userDescription: enrichedBrief ?? input.description,
+      ...(enrichedBrief ? { originalBrief: input.description } : {}),
+      tone: input.tone,
       ...IMAGE_DIMENSIONS[input.socialMedia],
     });
     return { imageUrl };
