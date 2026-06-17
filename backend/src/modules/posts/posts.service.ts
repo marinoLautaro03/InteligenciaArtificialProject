@@ -41,7 +41,10 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
       }),
       ai.generatePostImage({
         projectName: project.name,
+        projectDescription: project.description,
+        primaryColor: project.primaryColor,
         userDescription: input.description,
+        tone: input.tone,
         ...IMAGE_DIMENSIONS[input.socialMedia],
       }),
     ]);
@@ -64,13 +67,16 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
   },
 
   generateImage: async (
-    project: { id: number; name: string; description: string },
+    project: { id: number; name: string; description: string; primaryColor: string | null },
     _ownerId: string,
     input: GenerateImageInput,
   ): Promise<{ imageUrl: string }> => {
     const imageUrl = await ai.generatePostImage({
       projectName: project.name,
+      projectDescription: project.description,
+      primaryColor: project.primaryColor,
       userDescription: input.description,
+      tone: "casual",
       ...IMAGE_DIMENSIONS[input.socialMedia],
     });
     return { imageUrl };

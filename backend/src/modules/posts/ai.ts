@@ -1,3 +1,6 @@
+import { buildCopyPrompt } from "./prompts/copy.js";
+import { buildImagePrompt } from "./prompts/image.js";
+
 export type NetworkVariant = { copy: string; hashtags: string[] };
 
 export type AllNetworkCopies = {
@@ -18,7 +21,10 @@ export type AiService = {
 
   generatePostImage: (input: {
     projectName: string;
+    projectDescription: string;
+    primaryColor: string | null;
     userDescription: string;
+    tone: "formal" | "casual" | "humoristico" | "inspiracional";
     width: number;
     height: number;
   }) => Promise<string>;
@@ -31,23 +37,6 @@ type AiConfig = {
   imageModel: string;
   imageBaseUrl: string;
   imageApiKey: string;
-};
-
-const toneHints: Record<"formal" | "casual" | "humoristico" | "inspiracional", string> = {
-  formal:
-    "Tono FORMAL: escribí de manera profesional, clara y directa. Sin emojis, sin coloquialismos. " +
-    "Oraciones completas, vocabulario preciso. El lector debe sentir autoridad y confianza.",
-  casual:
-    "Tono CASUAL: escribí como si le hablaras a un amigo. Usá contracciones, tuteo, lenguaje cotidiano. " +
-    "Podés usar algún emoji puntual. Cercano, cálido, sin sonar corporativo.",
-  humoristico:
-    "Tono HUMORÍSTICO: el copy DEBE hacer sonreír o sorprender. Usá juegos de palabras, ironía suave, " +
-    "referencias inesperadas o giros cómicos. Los emojis deben reforzar el chiste, no ser decoración. " +
-    "Si el copy no tiene al menos un momento gracioso, no sirve.",
-  inspiracional:
-    "Tono INSPIRACIONAL: escribí para motivar y emocionar. Usá frases con impacto, verbos de acción, " +
-    "imágenes mentales poderosas. El lector debe terminar de leer con ganas de hacer algo. " +
-    "Evitá los clichés vacíos — cada frase tiene que sentirse genuina.",
 };
 
 const FALLBACK_COPIES: AllNetworkCopies = {
@@ -66,79 +55,7 @@ export const createAiService = (config: AiConfig): AiService => {
         );
       }
 
-      const prompt = `
-Sos un community manager experto generando contenido para "${input.projectName}".
-
-Descripción del proyecto:
-${input.projectDescription}
-
-${input.primaryColor ? `Color primario: ${input.primaryColor}` : ""}
-
-Tono:
-${toneHints[input.tone] ?? input.tone}
-
-Brief del usuario:
-${input.userDescription}
-
-Tu tarea:
-Generá copy para Instagram, X, LinkedIn y Facebook.
-
-IMPORTANTE:
-- Respondé ÚNICAMENTE con JSON válido.
-- No agregues explicaciones.
-- No agregues markdown.
-- No uses \`\`\`json.
-- No agregues texto antes ni después del JSON.
-- El resultado debe poder parsearse directamente con JSON.parse().
-- Todos los strings deben estar escapados correctamente.
-
-Formato EXACTO requerido:
-{
-  "instagram": {
-    "copy": "string",
-    "hashtags": ["#tag1", "#tag2"]
-  },
-  "x": {
-    "copy": "string",
-    "hashtags": ["#tag1", "#tag2"]
-  },
-  "linkedin": {
-    "copy": "string",
-    "hashtags": ["#tag1", "#tag2"]
-  },
-  "facebook": {
-    "copy": "string",
-    "hashtags": ["#tag1", "#tag2"]
-  }
-}
-
-Reglas:
-- Instagram:
-  - máximo 1500 caracteres
-  - hasta 8 hashtags
-  - creativo y visual
-  - se permiten emojis
-
-- X:
-  - máximo 240 caracteres TOTAL incluyendo hashtags
-  - máximo 2 hashtags
-  - directo e impactante
-
-- LinkedIn:
-  - máximo 1300 caracteres
-  - hasta 4 hashtags
-  - tono profesional
-
-- Facebook:
-  - máximo 400 caracteres
-  - hasta 2 hashtags
-  - tono conversacional
-
-- Los hashtags deben ir SOLO dentro del array "hashtags".
-- NO incluir hashtags dentro de "copy".
-- NO incluir saltos de línea innecesarios.
-- Si usás comillas dentro del copy, escapalas correctamente.
-`;
+      const { system, user } = buildCopyPrompt(input);
 
       const textRes = await fetch(`${config.textBaseUrl}/chat/completions`, {
         method: "POST",
@@ -148,7 +65,10 @@ Reglas:
         },
         body: JSON.stringify({
           model: config.textModel,
-          messages: [{role: "user", content: prompt}],
+          messages: [
+            { role: "system", content: system },
+            { role: "user", content: user },
+          ],
           response_format: {
             type: "json_object",
           }
@@ -181,11 +101,7 @@ Reglas:
       const modelSlug = config.imageModel.toLowerCase().replace(/\./g, "-");
       const url = `${config.imageBaseUrl}/providers/blackforestlabs/v1/${modelSlug}?api-version=preview`;
 
-      const prompt = [
-        `Social media image for project "${input.projectName}": ${input.userDescription}`,
-        "Minimalist, clean design, suitable for social media.",
-        "No text, letters, words, or typography of any kind unless explicitly requested by the user.",
-      ].join(". ");
+      const prompt = buildImagePrompt(input);
 
       const response = await fetch(url, {
         method: "POST",
