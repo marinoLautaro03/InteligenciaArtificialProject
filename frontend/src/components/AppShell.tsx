@@ -17,11 +17,22 @@ function ShellContent() {
   const { projects } = useProjects();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [dark, setDark] = useState<boolean>(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
 
   useEffect(() => {
     const id = setTimeout(() => setSidebarOpen(false), 0);
     return () => clearTimeout(id);
   }, [location.pathname]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+  }, [dark]);
 
   const projectMatch = useMatch('/projects/:projectId/*');
   const activeProjectId = projectMatch?.params.projectId
