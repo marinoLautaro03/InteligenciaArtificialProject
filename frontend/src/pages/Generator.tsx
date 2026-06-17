@@ -45,6 +45,7 @@ export default function Generator() {
   const [tone, setTone] = useState<Tone>('casual');
   const [description, setDescription] = useState('');
   const [generatingStage, setGeneratingStage] = useState<GeneratingStage>(null);
+  const [enrichingBrief, setEnrichingBrief] = useState(false);
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -142,6 +143,22 @@ export default function Generator() {
       setError(err instanceof Error ? err.message : 'Error al regenerar imagen.');
     } finally {
       setGeneratingStage(null);
+    }
+  };
+
+  const countWords = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
+
+  const handleEnrichBrief = async () => {
+    if (!description.trim() || countWords(description) < 5) return;
+    setEnrichingBrief(true);
+    setError('');
+    try {
+      const data = await postsApi.enrichBrief(numericId, { description }, getToken);
+      setDescription(data.enriched);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al mejorar brief.');
+    } finally {
+      setEnrichingBrief(false);
     }
   };
 
@@ -244,7 +261,21 @@ export default function Generator() {
 
           <h3>2 · Brief</h3>
           <div className="brief-field">
-            <label>Tema</label>
+            <div className="brief-field-header">
+              <label>Tema</label>
+              <span
+                className="btn-enrich-wrap"
+                title={enrichingBrief || countWords(description) >= 5 ? undefined : 'Escribí al menos 5 palabras para mejorar el brief'}
+              >
+                <button
+                  className="btn btn-sm btn-enrich"
+                  onClick={handleEnrichBrief}
+                  disabled={enrichingBrief || countWords(description) < 5}
+                >
+                  💡 {enrichingBrief ? 'Mejorando…' : 'Mejorar brief'}
+                </button>
+              </span>
+            </div>
             <textarea
               className="textarea"
               placeholder="¿De qué trata el post?"

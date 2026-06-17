@@ -4,6 +4,7 @@ import type { ProjectsService } from "../projects/projects.service.js";
 import {
   generatePostSchema,
   generateImageSchema,
+  enrichBriefSchema,
   savePostSchema,
   postIdParamsSchema,
   postsQuerySchema,
@@ -102,6 +103,25 @@ export const createPostsController = (
       result.data,
     );
     return c.json(imageResult, 200);
+  });
+
+  controller.post("/:projectId/posts/enrich-brief", async (c) => {
+    const user = await authenticate(c);
+    const params = projectIdParamsSchema.safeParse(c.req.param());
+    if (!params.success) return c.json({ error: "Invalid project id", issues: params.error.issues }, 400);
+
+    const body = await c.req.json().catch(() => undefined);
+    const result = enrichBriefSchema.safeParse(body);
+    if (!result.success) return c.json({ error: "Invalid request body", issues: result.error.issues }, 400);
+
+    const project = await projectsService.findByIdForOwner(params.data.projectId, user.userId);
+    if (!project) return c.json({ error: "Project not found" }, 404);
+
+    const enriched = await postsService.enrichBrief(
+      { id: project.id, name: project.name, description: project.description, primaryColor: project.primaryColor },
+      result.data,
+    );
+    return c.json(enriched, 200);
   });
 
   controller.post("/:projectId/posts/save", async (c) => {

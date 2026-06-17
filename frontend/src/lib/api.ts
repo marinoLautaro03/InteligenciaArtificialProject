@@ -92,6 +92,14 @@ export type GenerateCopyResult = {
   networks: GenerationResult['networks'];
 };
 
+export type GenerateEnrichInput = {
+  description: string;
+};
+
+export type GenerateEnrichResult = {
+  enriched: string;
+};
+
 export type GenerateImageResult = {
   imageUrl: string;
 };
@@ -139,6 +147,12 @@ export const postsApi = {
 
   generateImage: (projectId: number, input: GenerateImageInput, getToken: () => Promise<string | null>) =>
     request<GenerateImageResult>(`/projects/${projectId}/posts/generate-image`, getToken, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+
+  enrichBrief: (projectId: number, input: GenerateEnrichInput, getToken: () => Promise<string | null>) =>
+    request<GenerateEnrichResult>(`/projects/${projectId}/posts/enrich-brief`, getToken, {
       method: 'POST',
       body: JSON.stringify(input),
     }),
