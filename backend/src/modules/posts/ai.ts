@@ -1,5 +1,3 @@
-import {env} from "../../env.js";
-
 export type NetworkVariant = { copy: string; hashtags: string[] };
 
 export type AllNetworkCopies = {
@@ -23,7 +21,6 @@ export type AiService = {
     userDescription: string;
     width: number;
     height: number;
-    logoUrl?: string;
   }) => Promise<string>;
 };
 
@@ -59,10 +56,6 @@ const FALLBACK_COPIES: AllNetworkCopies = {
   linkedin: {copy: ".", hashtags: []},
   facebook: {copy: ".", hashtags: []},
 };
-
-const buildLogoUrl = (logoId: string) => {
-  return env.BACKEND_URL + "/images/logos/" + logoId;
-}
 
 export const createAiService = (config: AiConfig): AiService => {
   return {
@@ -168,7 +161,6 @@ Reglas:
       }
 
       const data = await textRes.json();
-      console.log(JSON.stringify(data?.choices || {}, null, 2));
       const raw = data.choices?.[0]?.message?.content;
 
       try {
@@ -193,7 +185,6 @@ Reglas:
         `Social media image for project "${input.projectName}": ${input.userDescription}`,
         "Minimalist, clean design, suitable for social media.",
         "No text, letters, words, or typography of any kind unless explicitly requested by the user.",
-        input.logoUrl?.startsWith("data:") ? "Incorporate the provided logo into the design in a harmonious way." : "",
       ].join(". ");
 
       const response = await fetch(url, {
@@ -206,8 +197,7 @@ Reglas:
           prompt,
           model: config.imageModel,
           width: input.width,
-          height: input.height,
-          ...(input.logoUrl?.startsWith("data:") ? { input_image: buildLogoUrl(input.id) } : {}),
+          height: input.height
         }),
       });
 

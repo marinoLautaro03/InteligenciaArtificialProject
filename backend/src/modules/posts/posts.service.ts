@@ -1,7 +1,6 @@
 import type { AllNetworkCopies, AiService } from "./ai.js";
 import type { PostsRepository } from "./posts.repository.js";
 import type { GeneratePostInput, GenerateImageInput, SavePostInput } from "./posts.schemas.js";
-import { env } from "../../env.js";
 
 const IMAGE_DIMENSIONS: Record<string, { width: number; height: number }> = {
   instagram: { width: 864, height: 1080 },
@@ -28,7 +27,7 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
   },
 
   generatePostVariants: async (
-    project: { id: number; name: string; description: string; primaryColor: string | null; logoUrl?: string | null },
+    project: { id: number; name: string; description: string; primaryColor: string | null },
     _ownerId: string,
     input: GeneratePostInput,
   ): Promise<GenerationResult> => {
@@ -43,7 +42,6 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
       ai.generatePostImage({
         projectName: project.name,
         userDescription: input.description,
-        logoUrl: project.logoUrl ? `${env.BACKEND_URL}/images/logos/${project.id}` : undefined,
         ...IMAGE_DIMENSIONS[input.socialMedia],
       }),
     ]);
@@ -66,14 +64,13 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
   },
 
   generateImage: async (
-    project: { id: number; name: string; description: string; logoUrl?: string | null },
+    project: { id: number; name: string; description: string },
     _ownerId: string,
     input: GenerateImageInput,
   ): Promise<{ imageUrl: string }> => {
     const imageUrl = await ai.generatePostImage({
       projectName: project.name,
       userDescription: input.description,
-      logoUrl: project.logoUrl ? `${env.BACKEND_URL}/images/logos/${project.id}` : undefined,
       ...IMAGE_DIMENSIONS[input.socialMedia],
     });
     return { imageUrl };
