@@ -111,6 +111,17 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
     return { imageUrl };
   },
 
+  generateRandomBrief: async (
+    project: { id: number; name: string; description: string; primaryColor: string | null },
+  ): Promise<{ brief: string }> => {
+    const brief = await ai.generateRandomBrief({
+      projectName: project.name,
+      projectDescription: project.description,
+      primaryColor: project.primaryColor,
+    });
+    return { brief };
+  },
+
   savePost: async (
     project: { id: number; name: string },
     _ownerId: string,

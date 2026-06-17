@@ -100,6 +100,10 @@ export type GenerateEnrichResult = {
   enriched: string;
 };
 
+export type GenerateRandomBriefResult = {
+  brief: string;
+};
+
 export type GenerateImageResult = {
   imageUrl: string;
 };
@@ -155,6 +159,12 @@ export const postsApi = {
     request<GenerateEnrichResult>(`/projects/${projectId}/posts/enrich-brief`, getToken, {
       method: 'POST',
       body: JSON.stringify(input),
+    }),
+
+  generateRandomBrief: (projectId: number, getToken: () => Promise<string | null>) =>
+    request<GenerateRandomBriefResult>(`/projects/${projectId}/posts/generate-random-brief`, getToken, {
+      method: 'POST',
+      body: JSON.stringify({}),
     }),
 
   save: (projectId: number, input: SavePostInput, getToken: () => Promise<string | null>) =>

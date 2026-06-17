@@ -124,6 +124,20 @@ export const createPostsController = (
     return c.json(enriched, 200);
   });
 
+  controller.post("/:projectId/posts/generate-random-brief", async (c) => {
+    const user = await authenticate(c);
+    const params = projectIdParamsSchema.safeParse(c.req.param());
+    if (!params.success) return c.json({ error: "Invalid project id", issues: params.error.issues }, 400);
+
+    const project = await projectsService.findByIdForOwner(params.data.projectId, user.userId);
+    if (!project) return c.json({ error: "Project not found" }, 404);
+
+    const result = await postsService.generateRandomBrief(
+      { id: project.id, name: project.name, description: project.description, primaryColor: project.primaryColor },
+    );
+    return c.json(result, 200);
+  });
+
   controller.post("/:projectId/posts/save", async (c) => {
     const user = await authenticate(c);
     const params = projectIdParamsSchema.safeParse(c.req.param());

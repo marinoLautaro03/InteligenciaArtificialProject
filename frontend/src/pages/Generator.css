@@ -148,6 +148,12 @@
   display: inline-block;
 }
 
+.brief-field-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .btn-enrich {
   font-size: var(--t-xs);
   display: flex;
