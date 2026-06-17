@@ -137,6 +137,24 @@
   gap: 6px;
 }
 
+.brief-field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.btn-enrich-wrap {
+  display: inline-block;
+}
+
+.btn-enrich {
+  font-size: var(--t-xs);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .brief-field label {
   font-size: var(--t-xs);
   font-weight: 500;

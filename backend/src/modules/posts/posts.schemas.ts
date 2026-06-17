@@ -56,3 +56,9 @@ export const generateImageSchema = z.object({
 });
 
 export type GenerateImageInput = z.infer<typeof generateImageSchema>;
+
+export const enrichBriefSchema = z.object({
+  description: z.string().trim().min(1),
+});
+
+export type EnrichBriefInput = z.infer<typeof enrichBriefSchema>;

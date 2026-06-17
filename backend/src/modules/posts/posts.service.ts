@@ -148,6 +148,19 @@ export const createPostsService = (postsRepository: PostsRepository, ai: AiServi
     return postsRepository.update(id, projectId, data);
   },
 
+  enrichBrief: async (
+    project: { id: number; name: string; description: string; primaryColor: string | null },
+    input: { description: string },
+  ): Promise<{ enriched: string }> => {
+    const enriched = await ai.enrichBrief({
+      projectName: project.name,
+      projectDescription: project.description,
+      primaryColor: project.primaryColor,
+      userDescription: input.description,
+    });
+    return { enriched };
+  },
+
   deletePost: async (id: number, projectId: number, ownerId: string) => {
     const post = await postsRepository.findByIdForProject(id, projectId, ownerId);
     if (!post) return false;
