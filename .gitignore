@@ -10,3 +10,5 @@ frontend/.env.local
 .idea
 .ai
 .claude/settings.local.json
+.playwright
+.playwright-cli
