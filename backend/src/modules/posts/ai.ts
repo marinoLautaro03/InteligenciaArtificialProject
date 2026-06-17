@@ -1,6 +1,7 @@
 import { buildCopyPrompt } from "./prompts/copy.js";
 import { buildEnrichPrompt } from "./prompts/enrich.js";
 import { buildImagePrompt } from "./prompts/image.js";
+import { buildRandomBriefPrompt } from "./prompts/random-brief.js";
 
 export type NetworkVariant = { copy: string; hashtags: string[] };
 
@@ -36,6 +37,12 @@ export type AiService = {
     projectDescription: string;
     primaryColor: string | null;
     userDescription: string;
+  }) => Promise<string>;
+
+  generateRandomBrief: (input: {
+    projectName: string;
+    projectDescription: string;
+    primaryColor: string | null;
   }) => Promise<string>;
 };
 
@@ -176,6 +183,39 @@ export const createAiService = (config: AiConfig): AiService => {
       if (!textRes.ok) {
         const body = await textRes.text();
         throw new Error(`Brief enrichment failed (${textRes.status}): ${body}`);
+      }
+
+      const data = await textRes.json();
+      return (data.choices?.[0]?.message?.content ?? "").trim();
+    },
+
+    generateRandomBrief: async (input) => {
+      if (!config.textBaseUrl || !config.textApiKey) {
+        throw new Error(
+          "AI text generation is not configured. Set AI_TEXT_BASE_URL and AI_TEXT_API_KEY.",
+        );
+      }
+
+      const { system, user } = buildRandomBriefPrompt(input);
+
+      const textRes = await fetch(`${config.textBaseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${config.textApiKey}`,
+        },
+        body: JSON.stringify({
+          model: config.textModel,
+          messages: [
+            { role: "system", content: system },
+            { role: "user", content: user },
+          ],
+        }),
+      });
+
+      if (!textRes.ok) {
+        const body = await textRes.text();
+        throw new Error(`Random brief generation failed (${textRes.status}): ${body}`);
       }
 
       const data = await textRes.json();

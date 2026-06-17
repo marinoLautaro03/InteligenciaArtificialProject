@@ -32,4 +32,15 @@ export type EnrichPromptResult = {
   user: string;
 };
 
+export type RandomBriefPromptInput = {
+  projectName: string;
+  projectDescription: string;
+  primaryColor: string | null;
+};
+
+export type RandomBriefPromptResult = {
+  system: string;
+  user: string;
+};
+
 export type Tone = CopyPromptInput["tone"];

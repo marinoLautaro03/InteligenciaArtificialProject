@@ -46,6 +46,7 @@ export default function Generator() {
   const [description, setDescription] = useState('');
   const [generatingStage, setGeneratingStage] = useState<GeneratingStage>(null);
   const [enrichingBrief, setEnrichingBrief] = useState(false);
+  const [generatingRandomBrief, setGeneratingRandomBrief] = useState(false);
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -162,6 +163,19 @@ export default function Generator() {
     }
   };
 
+  const handleGenerateRandomBrief = async () => {
+    setGeneratingRandomBrief(true);
+    setError('');
+    try {
+      const data = await postsApi.generateRandomBrief(numericId, getToken);
+      setDescription(data.brief);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al generar brief aleatorio.');
+    } finally {
+      setGeneratingRandomBrief(false);
+    }
+  };
+
   const handleApplyAdjust = async () => {
     if (!adjustText.trim()) return;
     setGeneratingStage('both');
@@ -263,18 +277,27 @@ export default function Generator() {
           <div className="brief-field">
             <div className="brief-field-header">
               <label>Tema</label>
-              <span
-                className="btn-enrich-wrap"
-                title={enrichingBrief || countWords(description) >= 5 ? undefined : 'Escribí al menos 5 palabras para mejorar el brief'}
-              >
+              <div className="brief-field-actions">
+                <span
+                  className="btn-enrich-wrap"
+                  title={enrichingBrief || countWords(description) >= 5 ? undefined : 'Escribí al menos 5 palabras para mejorar el brief'}
+                >
+                  <button
+                    className="btn btn-sm btn-enrich"
+                    onClick={handleEnrichBrief}
+                    disabled={enrichingBrief || countWords(description) < 5}
+                  >
+                    💡 {enrichingBrief ? 'Mejorando…' : 'Mejorar brief'}
+                  </button>
+                </span>
                 <button
                   className="btn btn-sm btn-enrich"
-                  onClick={handleEnrichBrief}
-                  disabled={enrichingBrief || countWords(description) < 5}
+                  onClick={handleGenerateRandomBrief}
+                  disabled={generatingRandomBrief}
                 >
-                  💡 {enrichingBrief ? 'Mejorando…' : 'Mejorar brief'}
+                  🎲 {generatingRandomBrief ? 'Generando…' : 'Brief aleatorio'}
                 </button>
-              </span>
+              </div>
             </div>
             <textarea
               className="textarea"
