@@ -2,7 +2,7 @@ import { useAuth } from '@clerk/react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { postsApi, projectsApi, type Post, type Project } from '../lib/api';
-import { Instagram, XSocial, LinkedIn, Facebook } from '../components/Icons';
+import { Instagram, XSocial, LinkedIn, Facebook, Sparkle } from '../components/Icons';
 import { toErrorMessage, useToast } from '../context/ToastContext';
 import './ProjectGallery.css';
 
@@ -27,12 +27,22 @@ const socialColors: Record<string, string> = {
   facebook: '#1877F2',
 };
 
+type NetworkFilter = 'all' | 'instagram' | 'x' | 'linkedin' | 'facebook';
+
+const NETWORKS: { id: Exclude<NetworkFilter, 'all'>; label: string }[] = [
+  { id: 'instagram', label: 'Instagram' },
+  { id: 'x', label: 'X' },
+  { id: 'linkedin', label: 'LinkedIn' },
+  { id: 'facebook', label: 'Facebook' },
+];
+
 export default function ProjectGallery() {
   const { projectId } = useParams();
   const { getToken } = useAuth();
   const { showError } = useToast();
   const [project, setProject] = useState<Project | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [filter, setFilter] = useState<NetworkFilter>('all');
   const [status, setStatus] = useState<'loading' | 'idle' | 'error'>('loading');
   const numericId = Number(projectId);
   const navigate = useNavigate();
@@ -71,6 +81,12 @@ export default function ProjectGallery() {
     }
   };
 
+  const filteredPosts =
+    filter === 'all' ? posts : posts.filter((post) => post.socialMedia === filter);
+
+  const countByNetwork = (networkId: Exclude<NetworkFilter, 'all'>) =>
+    posts.filter((post) => post.socialMedia === networkId).length;
+
   if (status === 'loading') {
     return <div className="dashboard-feedback">Cargando galería…</div>;
   }
@@ -102,19 +118,54 @@ export default function ProjectGallery() {
         </aside>
       </section>
 
-      {posts.length === 0 ? (
-        <div className="gallery-empty-state">
-          <div className="gallery-empty-card">
-            <h3>Todavía no hay posts generados.</h3>
-            <p>Crea el primer post describiendo qué necesitás y seleccionando una red social.</p>
-            <Link to={`/projects/${numericId}/generator`} className="btn btn-primary">
-              Generar primer post
-            </Link>
+      <div className="gallery-tabs">
+        <button
+          type="button"
+          className={`gallery-tab${filter === 'all' ? ' active' : ''}`}
+          onClick={() => setFilter('all')}
+        >
+          Todos <span className="count">{posts.length}</span>
+        </button>
+        {NETWORKS.map((network) => (
+          <button
+            key={network.id}
+            type="button"
+            className={`gallery-tab${filter === network.id ? ' active' : ''}`}
+            onClick={() => setFilter(network.id)}
+          >
+            {NETWORK_ICONS[network.id]}
+            {network.label}
+            <span className="count">{countByNetwork(network.id)}</span>
+          </button>
+        ))}
+      </div>
+
+      {filteredPosts.length === 0 ? (
+        filter === 'all' && posts.length === 0 ? (
+          <div className="gallery-empty-state">
+            <div className="gallery-empty-card">
+              <h3>Todavía no hay posts generados.</h3>
+              <p>Crea el primer post describiendo qué necesitás y seleccionando una red social.</p>
+              <Link to={`/projects/${numericId}/generator`} className="btn btn-primary">
+                Generar primer post
+              </Link>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="gallery-empty-state">
+            <div className="gallery-empty-card">
+              <h3>Sin posts en esta red</h3>
+              <p>Cambiá el filtro o creá un nuevo post para esta red social.</p>
+              <Link to={`/projects/${numericId}/generator`} className="btn btn-primary btn-sm">
+                <Sparkle size={14} />
+                Crear el primero
+              </Link>
+            </div>
+          </div>
+        )
       ) : (
         <section className="gallery-grid">
-          {posts.map((post) => (
+          {filteredPosts.map((post) => (
             <article
               key={post.id}
               className="gallery-card"

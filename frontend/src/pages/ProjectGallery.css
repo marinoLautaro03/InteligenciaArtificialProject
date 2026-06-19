@@ -52,6 +52,48 @@
   line-height: 1.5;
 }
 
+.gallery-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+  overflow-x: auto;
+}
+
+.gallery-tab {
+  background: transparent;
+  border: none;
+  padding: 10px 16px 12px;
+  font-size: 13.5px;
+  color: var(--fg-muted);
+  border-bottom: 1.5px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.gallery-tab:hover {
+  color: var(--fg);
+}
+
+.gallery-tab.active {
+  color: var(--fg);
+  border-bottom-color: var(--fg);
+}
+
+.gallery-tab .count {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  background: var(--surface-2);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--fg-soft);
+}
+
 .gallery-empty-state {
   padding: 16px 0 8px;
 }
