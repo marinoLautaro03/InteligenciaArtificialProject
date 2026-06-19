@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProjectForm from '../components/ProjectForm';
 import { useProjects } from '../context/ProjectsContext';
+import { useToast } from '../context/ToastContext';
 import { projectsApi, type CreateProjectInput, type Project } from '../lib/api';
 import './Dashboard.css';
 
@@ -23,6 +24,13 @@ export default function Dashboard() {
   const { getToken } = useAuth();
   const navigate = useNavigate();
   const { projects, status, error, setProjects } = useProjects();
+  const { showError } = useToast();
+
+  useEffect(() => {
+    if (status === 'error' && error) {
+      showError(error);
+    }
+  }, [status, error, showError]);
 
   const [search, setSearch] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -130,7 +138,7 @@ export default function Dashboard() {
       ) : null}
 
       {status === 'error' ? (
-        <div className="error-banner">{error}</div>
+        <div className="dashboard-feedback">No pudimos cargar los proyectos.</div>
       ) : null}
 
       {isEmpty ? (

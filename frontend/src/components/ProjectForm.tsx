@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { CreateProjectInput, Project } from '../lib/api';
+import { toErrorMessage, useToast } from '../context/ToastContext';
 
 type ProjectFormProps = {
   initialValue?: Project | null;
@@ -35,13 +36,13 @@ const toFormState = (project?: Project | null): FormState => {
 export default function ProjectForm({ initialValue, isSubmitting, onCancel, onSubmit }: ProjectFormProps) {
   const [form, setForm] = useState<FormState>(() => toFormState(initialValue));
   const [logoPreview, setLogoPreview] = useState('');
-  const [error, setError] = useState('');
+  const { showError } = useToast();
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      setError('El archivo debe ser una imagen.');
+      showError('El archivo debe ser una imagen.');
       return;
     }
     const reader = new FileReader();
@@ -58,7 +59,6 @@ export default function ProjectForm({ initialValue, isSubmitting, onCancel, onSu
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError('');
     try {
       const input: CreateProjectInput = {
         name: form.name.trim(),
@@ -70,7 +70,7 @@ export default function ProjectForm({ initialValue, isSubmitting, onCancel, onSu
       }
       await onSubmit(input);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No pudimos guardar el proyecto.');
+      showError(toErrorMessage(err, 'No pudimos guardar el proyecto.'));
     }
   };
 
@@ -156,8 +156,6 @@ export default function ProjectForm({ initialValue, isSubmitting, onCancel, onSu
               </div>
             </label>
           </div>
-
-          {error ? <div className="error-banner">{error}</div> : null}
 
           <div className="project-form-actions">
             <button className="btn btn-ghost" type="button" onClick={onCancel} disabled={isSubmitting}>

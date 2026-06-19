@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { postsApi, projectsApi, type Post, type Project } from '../lib/api';
 import { Instagram, XSocial, LinkedIn, Facebook } from '../components/Icons';
+import { toErrorMessage, useToast } from '../context/ToastContext';
 import './ProjectGallery.css';
 
 const NETWORK_ICONS: Record<string, React.ReactNode> = {
@@ -29,10 +30,10 @@ const socialColors: Record<string, string> = {
 export default function ProjectGallery() {
   const { projectId } = useParams();
   const { getToken } = useAuth();
+  const { showError } = useToast();
   const [project, setProject] = useState<Project | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [status, setStatus] = useState<'loading' | 'idle' | 'error'>('loading');
-  const [error, setError] = useState('');
   const numericId = Number(projectId);
   const navigate = useNavigate();
 
@@ -40,11 +41,10 @@ export default function ProjectGallery() {
     const loadData = async () => {
       if (!Number.isInteger(numericId) || numericId <= 0) {
         setStatus('error');
-        setError('Proyecto inválido.');
+        showError('Proyecto inválido.');
         return;
       }
       setStatus('loading');
-      setError('');
       try {
         const [item, postList] = await Promise.all([
           projectsApi.getById(numericId, getToken),
@@ -55,20 +55,19 @@ export default function ProjectGallery() {
         setStatus('idle');
       } catch (err) {
         setStatus('error');
-        setError(err instanceof Error ? err.message : 'No pudimos cargar la galería.');
+        showError(toErrorMessage(err, 'No pudimos cargar la galería.'));
       }
     };
     void loadData();
-  }, [getToken, numericId]);
+  }, [getToken, numericId, showError]);
 
   const handleDelete = async (postId: number) => {
     if (!window.confirm('¿Eliminar este post? Esta acción no se puede deshacer.')) return;
-    setError('');
     try {
       await postsApi.delete(numericId, postId, getToken);
       setPosts((prev) => prev.filter((p) => p.id !== postId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al eliminar.');
+      showError(toErrorMessage(err, 'Error al eliminar.'));
     }
   };
 
@@ -77,7 +76,7 @@ export default function ProjectGallery() {
   }
 
   if (status === 'error') {
-    return <div className="error-banner">{error}</div>;
+    return <div className="dashboard-feedback">No pudimos cargar la galería.</div>;
   }
 
   if (!project) return null;
@@ -102,8 +101,6 @@ export default function ProjectGallery() {
           </Link>
         </aside>
       </section>
-
-      {error && <div className="error-banner">{error}</div>}
 
       {posts.length === 0 ? (
         <div className="gallery-empty-state">

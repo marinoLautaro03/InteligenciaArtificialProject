@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { postsApi, projectsApi, type GenerationResult, type Project } from '../lib/api';
 import SocialPreview from '../components/SocialPreview';
 import { Sparkle, Instagram, XSocial, LinkedIn, Facebook } from '../components/Icons';
+import { toErrorMessage, useToast } from '../context/ToastContext';
 
 const NETWORK_ICONS: Record<string, React.ReactNode> = {
   instagram: <Instagram size={18} />,
@@ -36,6 +37,7 @@ export default function Generator() {
   const { projectId, postId } = useParams();
   const { getToken } = useAuth();
   const navigate = useNavigate();
+  const { showError } = useToast();
 
   const numericId = Number(projectId);
   const numericPostId = postId ? Number(postId) : undefined;
@@ -49,7 +51,6 @@ export default function Generator() {
   const [generatingRandomBrief, setGeneratingRandomBrief] = useState(false);
   const [result, setResult] = useState<GenerationResult | null>(null);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
   const [project, setProject] = useState<Project | null>(null);
   const [view, setView] = useState<View>('preview');
   const [adjustText, setAdjustText] = useState('');
@@ -94,12 +95,11 @@ export default function Generator() {
     if (!description.trim()) return;
     setGeneratingStage('both');
     setResult(null);
-    setError('');
     try {
       const data = await postsApi.generate(numericId, { description, tone, socialMedia: network }, getToken);
       setResult(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al generar.');
+      showError(toErrorMessage(err, 'Error al generar.'));
     } finally {
       setGeneratingStage(null);
     }
@@ -108,12 +108,11 @@ export default function Generator() {
   const handleRegenerateAll = async () => {
     if (!description.trim()) return;
     setGeneratingStage('both');
-    setError('');
     try {
       const data = await postsApi.generate(numericId, { description, tone, socialMedia: network }, getToken);
       setResult(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al regenerar.');
+      showError(toErrorMessage(err, 'Error al regenerar.'));
     } finally {
       setGeneratingStage(null);
     }
@@ -122,12 +121,11 @@ export default function Generator() {
   const handleRegenerateCopy = async () => {
     if (!description.trim()) return;
     setGeneratingStage('copy');
-    setError('');
     try {
       const data = await postsApi.generateCopy(numericId, { description, tone, socialMedia: network }, getToken);
       setResult((prev) => (prev ? { ...prev, networks: data.networks } : null));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al regenerar copy.');
+      showError(toErrorMessage(err, 'Error al regenerar copy.'));
     } finally {
       setGeneratingStage(null);
     }
@@ -136,12 +134,11 @@ export default function Generator() {
   const handleRegenerateImage = async () => {
     if (!description.trim()) return;
     setGeneratingStage('image');
-    setError('');
     try {
       const data = await postsApi.generateImage(numericId, { description, tone, socialMedia: network }, getToken);
       setResult((prev) => (prev ? { ...prev, imageUrl: data.imageUrl } : null));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al regenerar imagen.');
+      showError(toErrorMessage(err, 'Error al regenerar imagen.'));
     } finally {
       setGeneratingStage(null);
     }
@@ -152,12 +149,11 @@ export default function Generator() {
   const handleEnrichBrief = async () => {
     if (!description.trim() || countWords(description) < 5) return;
     setEnrichingBrief(true);
-    setError('');
     try {
       const data = await postsApi.enrichBrief(numericId, { description }, getToken);
       setDescription(data.enriched);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al mejorar brief.');
+      showError(toErrorMessage(err, 'Error al mejorar brief.'));
     } finally {
       setEnrichingBrief(false);
     }
@@ -165,12 +161,11 @@ export default function Generator() {
 
   const handleGenerateRandomBrief = async () => {
     setGeneratingRandomBrief(true);
-    setError('');
     try {
       const data = await postsApi.generateRandomBrief(numericId, getToken);
       setDescription(data.brief);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al generar brief aleatorio.');
+      showError(toErrorMessage(err, 'Error al generar brief aleatorio.'));
     } finally {
       setGeneratingRandomBrief(false);
     }
@@ -179,14 +174,13 @@ export default function Generator() {
   const handleApplyAdjust = async () => {
     if (!adjustText.trim()) return;
     setGeneratingStage('both');
-    setError('');
     try {
       const adjustedDescription = `${description}\n\n${adjustText}`;
       const data = await postsApi.generate(numericId, { description: adjustedDescription, tone, socialMedia: network }, getToken);
       setResult(data);
       setAdjustText('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al aplicar ajuste.');
+      showError(toErrorMessage(err, 'Error al aplicar ajuste.'));
     } finally {
       setGeneratingStage(null);
     }
@@ -195,7 +189,6 @@ export default function Generator() {
   const handleSave = async () => {
     if (!result) return;
     setSaving(true);
-    setError('');
     try {
       if (isEditMode && numericPostId) {
         await postsApi.update(
@@ -220,7 +213,7 @@ export default function Generator() {
       }
       navigate(`/projects/${numericId}/gallery`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al guardar.');
+      showError(toErrorMessage(err, 'Error al guardar.'));
     } finally {
       setSaving(false);
     }
@@ -247,8 +240,6 @@ export default function Generator() {
           {isEditMode ? 'Volver a galería' : 'Ver galería'}
         </Link>
       </div>
-
-      {error && <div className="error-banner">{error}</div>}
 
       <div className="gen-grid">
         <aside className="brief-panel">

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSignIn, useSignUp, useAuth } from '@clerk/react'
 import { useNavigate } from 'react-router-dom'
+import { useToast } from '../context/ToastContext'
 import './LoginPage.css'
 
 type AuthMode = 'sign-in' | 'sign-up'
@@ -50,9 +51,9 @@ export default function LoginPage() {
   const { signUp } = useSignUp()
   const { isLoaded } = useAuth()
   const navigate = useNavigate()
+  const { showError } = useToast()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [authMode, setAuthMode] = useState<AuthMode>('sign-in')
 
@@ -60,11 +61,9 @@ export default function LoginPage() {
 
   const switchAuthMode = () => {
     setAuthMode(isSignIn ? 'sign-up' : 'sign-in')
-    setError('')
   }
 
   const loginWithOAuth = async (provider: 'oauth_google') => {
-    setError('')
     try {
       const auth = isSignIn ? signIn : signUp
       const result = await auth.sso({
@@ -73,20 +72,19 @@ export default function LoginPage() {
         redirectCallbackUrl: `/sso-callback`,
       })
       if (result.error) {
-        setError(result.error.message ?? 'Error al conectar con el proveedor.')
+        showError(result.error.message ?? 'Error al conectar con el proveedor.')
       }
     } catch {
-      setError('Error al conectar con el proveedor. Intentá de nuevo.')
+      showError('Error al conectar con el proveedor. Intentá de nuevo.')
     }
   }
 
   const registerWithEmail = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
     setLoading(true)
     try {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        setError('Ingresá un email válido.')
+        showError('Ingresá un email válido.')
         return
       }
       const createResult = await signUp.password({
@@ -94,18 +92,18 @@ export default function LoginPage() {
         password
       })
       if (createResult.error) {
-        setError(createResult.error.message ?? 'Error al crear la cuenta')
+        showError(createResult.error.message ?? 'Error al crear la cuenta')
         return
       }
       const finalResult = await signUp.finalize()
       if (finalResult.error) {
-        setError(finalResult.error.message ?? 'Error al crear la cuenta')
+        showError(finalResult.error.message ?? 'Error al crear la cuenta')
         return
       }
       console.log(signUp.status)
       navigate('/')
     } catch {
-      setError('Error al crear la cuenta. Verificá tus datos e intentá de nuevo.')
+      showError('Error al crear la cuenta. Verificá tus datos e intentá de nuevo.')
     } finally {
       setLoading(false)
     }
@@ -113,31 +111,30 @@ export default function LoginPage() {
 
   const loginWithEmail = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
     setLoading(true)
     try {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        setError('Ingresá un email válido.')
+        showError('Ingresá un email válido.')
         return
       }
       const createResult = await signIn.create({ identifier: email })
       if (createResult.error) {
-        setError(createResult.error.message ?? 'Error al iniciar sesión')
+        showError(createResult.error.message ?? 'Error al iniciar sesión')
         return
       }
       const pwResult = await signIn.password({ password })
       if (pwResult.error) {
-        setError(pwResult.error.message ?? 'Error al iniciar sesión')
+        showError(pwResult.error.message ?? 'Error al iniciar sesión')
         return
       }
       const finalResult = await signIn.finalize()
       if (finalResult.error) {
-        setError(finalResult.error.message ?? 'Error al iniciar sesión')
+        showError(finalResult.error.message ?? 'Error al iniciar sesión')
         return
       }
       navigate('/')
     } catch {
-      setError('Error al iniciar sesión. Verificá tus datos e intentá de nuevo.')
+      showError('Error al iniciar sesión. Verificá tus datos e intentá de nuevo.')
     } finally {
       setLoading(false)
     }
@@ -269,7 +266,6 @@ export default function LoginPage() {
                 required
               />
             </div>
-            {error && <div className="login-error">{error}</div>}
             <button className="btn-primary" type="submit" disabled={loading}>
               {submitLabel}
             </button>
